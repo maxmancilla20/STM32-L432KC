@@ -16,8 +16,6 @@
 
 int main(void)
 {
-    int8_t FlagStatus = 0;
-
     /* Enable clock access to GPIOB */
     RCC->AHB2ENR |= GPIOBEN;
 
@@ -27,22 +25,16 @@ int main(void)
 
     while(1)
     {
-        if(FlagStatus == 0)
-        {
-            /* Turn on the LED */
-            GPIOB->ODR |= USER_LED_PIN;
-            FlagStatus = 1;
-        }
-        else
-        {
-            /* Turn off the LED */
-            GPIOB->ODR &= ~USER_LED_PIN;
-            FlagStatus = 0;
-        }
-        /* Toggle the LED */
-        //GPIOB->ODR ^= USER_LED_PIN;
+        //GPIOB->ODR |= USER_LED_PIN;  /* Turn on the LED */
+        //GPIOB->ODR &= ~USER_LED_PIN; /* Turn off the LED */
+        //GPIOB->ODR ^= USER_LED_PIN;  /* Toggle the LED */
 
-
+        /* Turn on the LED using bit set/reset register */
+        GPIOB->BSRR = USER_LED_PIN;
+        /* Delay */
+        for(int i = 0; i < 100000; i++){}
+        /* Turn off the LED using bit set/reset register */
+        GPIOB->BSRR = (1U << 19);
         /* Delay */
         for(int i = 0; i < 100000; i++){}
     }
