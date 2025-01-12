@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include "stm32l4xx.h"
 
-void Uart2_TX_Init(void);
+void Uart2_RXTX_Init(void);
+char read_uart2(void);
 
 #endif /* UART_H_ */

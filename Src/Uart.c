@@ -17,8 +17,10 @@
 #define UART2_BAUD_RATE     115200U
 
 #define CR1_TE              (1U<<3)
+#define CR1_RE              (1U<<2)
 #define CR1_UE              (1U<<0)
 #define ISR_TXE              (1U<<7)
+#define ISR_RXN             (1U<<5)
 
 static void uart_set_baud_rate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t BaudRate);
 static uint16_t compute_uart_bd(uint32_t PeriphClk, uint32_t BaudRate);
@@ -36,16 +38,16 @@ int __io_putchar(int ch)
  * This function initializes UART2 for transmission.
  * It configures GPIOA and UART2 registers.
  */
-void Uart2_TX_Init(void)
+void Uart2_RXTX_Init(void)
 {
     /* ================ CONFIGURE GPIOA ================= */
     /* Enable port access to GPIOA */
     RCC->AHB2ENR |= GPIOAEN;
 
+    /* ================ TX CFG ===================*/
     /* Set PA2 mode to alternate function mode */
     GPIOA->MODER &= ~(1U << 4); /* Clear bit 4 */
     GPIOA->MODER |= (1U << 5); /* Set bit 5 */
-
 
     /* Set PA2 alternate function type to UART_TX (AF07). 
      * Note: AFR[0] is for low regs (pin 0 to 7). AFR[1] is for high reg (pin 8 to 15) */
@@ -54,6 +56,17 @@ void Uart2_TX_Init(void)
     GPIOA->AFR[0] |= (1U << 10); /* Set bit 10 */
     GPIOA->AFR[0] &= ~(1U << 11); /* Clear bit 11 */
 
+    /* ================ RX CFG ===================*/
+    /* Set PA3 mode to alternate function mode*/
+    GPIOA->MODER &= ~(1U << 6); /* Clear bit 6 */
+    GPIOA->MODER |= (1U << 7); /* Set bit 7 */
+
+    /* Set PA3 alternate function type to UART_TX (AF07)*/
+    GPIOA->AFR[0] |= (1U << 12); /* Set bit 12 */
+    GPIOA->AFR[0] |= (1U << 13); /* Set bit 13 */
+    GPIOA->AFR[0] |= (1U << 14); /* Set bit 14 */
+    GPIOA->AFR[0] &= ~(1U << 15); /* Clear bit 15 */
+    
     /* ================ CONFIGURE UART2 ================= */
     /* Enable clock access to UART2 */
     RCC->APB1ENR1 |= UART2EN;
@@ -63,7 +76,7 @@ void Uart2_TX_Init(void)
     /* Set UART2 stop bits to 1 */
     /* Configure the transfer direction 
     Note: Use only = to clear the UART reg*/
-    USART2->CR1 = CR1_TE;
+    USART2->CR1 = (CR1_TE | CR1_RE);
     /* Enable UART2 */
     USART2->CR1 |= CR1_UE;
 }
@@ -98,4 +111,17 @@ void write_uart2(uint8_t data)
     while(!(USART2->ISR & (ISR_TXE))){}
     /* Write data to the transmit data register */
     USART2->TDR = (data & 0xFFU);
+}
+
+/*
+ * read_uart2 function
+ * 
+ * This function reads data from the UART2 peripheral.
+ */
+char read_uart2(void)
+{
+    /* Wait until the receive data register is not empty */
+    while(!(USART2->ISR & (ISR_RXN))){}
+    /* Read data from the receive data register */
+    return (char)(USART2->RDR & 0xFFU);
 }

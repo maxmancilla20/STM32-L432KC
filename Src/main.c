@@ -27,7 +27,7 @@
 int main(void)
 {
     // Initialization code here
-    Uart2_TX_Init();
+    Uart2_RXTX_Init();
     while(1)
     {
         // Main loop
