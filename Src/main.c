@@ -13,6 +13,7 @@
  * ==========================================================================
  */
 
+#include <stdio.h>
 #include <stdint.h>
 #include "stm32l4xx.h"
 
@@ -20,17 +21,25 @@
 #define GPIOBEN             (1U<<1)
 #define UART2EN             (1U<<17)
 
-#define SYSCLK_FREQ_80_MHZ  80000000U
-#define SYSFREQ_16_MHZ      16000000U
+#define SYSFREQ_4_MHZ       4000000U
 
 #define UART2_BAUD_RATE     115200U
 
 #define CR1_TE              (1U<<3)
 #define CR1_UE              (1U<<0)
+#define ISR_TXE              (1U<<7)
 
 static void uart_set_baud_rate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t BaudRate);
 static uint16_t compute_uart_bd(uint32_t PeriphClk, uint32_t BaudRate);
+void write_uart2(uint8_t data);
+void Uart2_TX_Init(void);
 
+
+int __io_putchar(int ch)
+{
+    write_uart2(ch);
+    return ch;
+}
 /*
  * main function
  * 
@@ -39,11 +48,14 @@ static uint16_t compute_uart_bd(uint32_t PeriphClk, uint32_t BaudRate);
 int main(void)
 {
     // Initialization code here
+    Uart2_TX_Init();
 
     while(1)
     {
         // Main loop
+    	printf("Hello World!\n\r");
     }
+
 
     return 0;
 }
@@ -64,6 +76,7 @@ void Uart2_TX_Init(void)
     GPIOA->MODER &= ~(1U << 4); /* Clear bit 4 */
     GPIOA->MODER |= (1U << 5); /* Set bit 5 */
 
+
     /* Set PA2 alternate function type to UART_TX (AF07). 
      * Note: AFR[0] is for low regs (pin 0 to 7). AFR[1] is for high reg (pin 8 to 15) */
     GPIOA->AFR[0] |= (1U << 8); /* Set bit 8 */
@@ -75,7 +88,7 @@ void Uart2_TX_Init(void)
     /* Enable clock access to UART2 */
     RCC->APB1ENR1 |= UART2EN;
     /* Set UART2 baud rate to 115200U */
-    uart_set_baud_rate(USART2, SYSFREQ_16_MHZ, UART2_BAUD_RATE);
+    uart_set_baud_rate(USART2, SYSFREQ_4_MHZ, UART2_BAUD_RATE);
     /* Set UART2 word length to 8 bits */
     /* Set UART2 stop bits to 1 */
     /* Configure the transfer direction 
@@ -93,4 +106,12 @@ static void uart_set_baud_rate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32
 static uint16_t compute_uart_bd(uint32_t PeriphClk, uint32_t BaudRate)
 {
    return ((PeriphClk + (BaudRate/2U)) / BaudRate); /* Compute baud rate */
+}
+
+void write_uart2(uint8_t data)
+{
+    /* Wait until the transmit data register is empty */
+    while(!(USART2->ISR & (ISR_TXE))){}
+    /* Write data to the transmit data register */
+    USART2->TDR = (data & 0xFFU);
 }
