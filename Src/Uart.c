@@ -14,7 +14,7 @@
 
 #define SYSFREQ_4_MHZ       4000000U
 
-#define UART2_BAUD_RATE     115200U
+#define UART2_BAUD_RATE     9600U
 
 #define CR1_TE              (1U<<3)
 #define CR1_RE              (1U<<2)

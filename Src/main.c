@@ -13,12 +13,23 @@
  * ==========================================================================
  */
 
+/*
+Used registers
+GPIOB->ODR |= USER_LED_PIN; // Turn on the LED
+GPIOB->ODR &= ~USER_LED_PIN; // Turn off the LED
+GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
+*/
 #include <stdio.h>
 #include <stdint.h>
 #include "stm32l4xx.h"
 #include "Uart.h"
 
+#define GPIOB_3 (1U<<3)
+#define USER_LED_PIN (GPIOB_3)
 
+#define GPIOBEN (1U<<1)
+
+char key = 0;
 /*
  * main function
  * 
@@ -26,12 +37,34 @@
  */
 int main(void)
 {
+    RCC->AHB2ENR |= GPIOBEN; // Enable GPIOB clock access
+
+    /* Set PB3 as OUTPUT */
+    GPIOB->MODER |= (1U<<6); // Set PB3 as OUTPUT
+    GPIOB->MODER &= ~(1U<<7); // Set PB3 as OUTPUT
+
     // Initialization code here
     Uart2_RXTX_Init();
+    
     while(1)
     {
-        // Main loop
-    	printf("Hello World!\n\r");
+        key = read_uart2(); // Read the key pressed
+
+        if(key == '1')
+        {
+            GPIOB->ODR |= USER_LED_PIN; // Turn on the LED
+            printf("LED Turned ON!\n\r");
+        }
+        else if(key == '0')
+        {
+            GPIOB->ODR &= ~USER_LED_PIN; // Turn off the LED
+            printf("LED Turned OFF!\n\r");
+        }
+        else if(key == 't')
+        {
+            GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
+            printf("LED Toggled!\n\r");
+        }
     }
     return 0;
 }
