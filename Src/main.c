@@ -11,41 +11,60 @@
 
 #define PIN3                (1U<<3) 
 #define USER_LED_PIN        (PIN3)
+#define PIN7                (1U<<7)
 #define GPIOAEN             (1U<<0)
 #define GPIOBEN             (1U<<1)
 
+
+/*Modules:
+ * FPU
+ * UART
+ * TIMEBASE
+ * GPIO (BSP)
+ * ADC
+ * */
+
+
+
+#define  GPIOAEN		(1U<<0)
+#define  PIN5			(1U<<5)
+#define  LED_PIN		PIN5
+
+//bool btn_state;
+
+
+unsigned char __attribute__((section(".custom_ram_block"))) custom_ram_buff[10];   //10 bytes
+unsigned char __attribute__((section(".custom_flash_block"))) custom_flash_buff[50];   //10 bytes
+
 int main(void)
 {
-    int8_t FlagStatus = 0;
-
     /* Enable clock access to GPIOB */
     RCC->AHB2ENR |= GPIOBEN;
 
-    /* Set PB3 AS OUTPUT */
+    /* Set PB3 AS OUTPUT MODE B7 = 0, B6 =  1*/
     GPIOB->MODER |= (1U<<6);
     GPIOB->MODER &=~ (1U<<7);
 
+    /* Set PB7 as input B14 = 0, B15 = 0 */
+    GPIOB->MODER &=~ (1U<<14);
+    GPIOB->MODER &=~ (1U<<15); 
+
     while(1)
     {
-        if(FlagStatus == 0)
+        //GPIOB->ODR |= USER_LED_PIN;  /* Turn on the LED */
+        //GPIOB->ODR &= ~USER_LED_PIN; /* Turn off the LED */
+        //GPIOB->ODR ^= USER_LED_PIN;  /* Toggle the LED */
+        //for(int i = 0; i < 100000; i++){} /* Delay */
+        
+        if(GPIOB->IDR & PIN7) /* Check if the button is pressed */
         {
-            /* Turn on the LED */
-            GPIOB->ODR |= USER_LED_PIN;
-            FlagStatus = 1;
+            GPIOB->BSRR = USER_LED_PIN;
         }
         else
         {
-            /* Turn off the LED */
-            GPIOB->ODR &= ~USER_LED_PIN;
-            FlagStatus = 0;
+            GPIOB->BSRR = (1U << 19);
         }
-        /* Toggle the LED */
-        //GPIOB->ODR ^= USER_LED_PIN;
-
-
-        /* Delay */
-        for(int i = 0; i < 100000; i++){}
     }
-
     return 0;
 }
+

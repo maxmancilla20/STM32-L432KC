@@ -51,6 +51,7 @@ MEMORY
 }
 
 /* Sections */
+/* If you need to add more memory sections, add them here */
 SECTIONS
 {
   /* The startup code into "FLASH" Rom type memory */
@@ -60,6 +61,23 @@ SECTIONS
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } >FLASH
+
+  /*=======================================================================*/
+  /*                          Custom Sections                               */
+  /*=================================<RAM>===================================*/
+   /*Create this section in the RAM*/
+   .custom_ram_block 0x20001000(NOLOAD) : 
+   {
+   
+   /*Keep variables even if they are not referenced*/
+    KEEP(*(.custom_ram_block))
+   } >RAM
+     /*=============================ROM=======================================*/
+   .custom_flash_block 0x08010000 :
+   {
+   	KEEP(*(.custom_flash_block))
+   } >FLASH
+     /*=======================================================================*/
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
@@ -150,6 +168,7 @@ SECTIONS
 
   } >RAM AT> FLASH
 
+  
   _sisram2 = LOADADDR(.sram2);
 
   /* SRAM2 section

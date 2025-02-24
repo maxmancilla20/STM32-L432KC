@@ -45,7 +45,8 @@
 									<listOptionValue builtIn="false" value="STM32L432xx"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths.1444131089" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="&quot;D:\Sandboxes\STM\L432KC\GPIO\Inc\chip_headers\CMSIS\Device\ST\STM32L4xx\Include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;D:\Sandboxes\STM\L432KC\GPIO\Inc\chip_headers\CMSIS\Include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;F:\Sandboxes\STM32\BareMetal_1\Inc\chip_headers\CMSIS\Device\ST\STM32L4xx\Include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;F:\Sandboxes\STM32\BareMetal_1\Inc\chip_headers\CMSIS\Include&quot;"/>
 								</option>
