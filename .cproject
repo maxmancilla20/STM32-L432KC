@@ -49,6 +49,7 @@
 									<listOptionValue builtIn="false" value="&quot;D:\Sandboxes\STM\L432KC\GPIO\Inc\chip_headers\CMSIS\Include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;F:\Sandboxes\STM32\BareMetal_1\Inc\chip_headers\CMSIS\Device\ST\STM32L4xx\Include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;F:\Sandboxes\STM32\BareMetal_1\Inc\chip_headers\CMSIS\Include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;D:\Sandboxes\STM\L432LC_UART\Inc&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.181679365" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>

@@ -47,7 +47,7 @@ MEMORY
 {
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 64K
   SRAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 256K
+  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 32K
 }
 
 /* Sections */
@@ -63,21 +63,10 @@ SECTIONS
   } >FLASH
 
   /*=======================================================================*/
-  /*                          Custom Sections                               */
-  /*=================================<RAM>===================================*/
-   /*Create this section in the RAM*/
-   .custom_ram_block 0x20001000(NOLOAD) : 
-   {
-   
-   /*Keep variables even if they are not referenced*/
-    KEEP(*(.custom_ram_block))
-   } >RAM
-     /*=============================ROM=======================================*/
-   .custom_flash_block 0x08010000 :
-   {
-   	KEEP(*(.custom_flash_block))
-   } >FLASH
-     /*=======================================================================*/
+  /*                           BOOTLOADER                                  */
+  /*=======================================================================*/
+
+     /*====================================================================*/
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :

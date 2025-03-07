@@ -7,7 +7,9 @@
  * ==========================================================================
  * */
 #include <stdint.h>
+#include <stdio.h>
 #include "stm32l4xx.h"
+#include "Uart.h"
 
 #define PIN3                (1U<<3) 
 #define USER_LED_PIN        (PIN3)
@@ -30,41 +32,90 @@
 #define  PIN5			(1U<<5)
 #define  LED_PIN		PIN5
 
-//bool btn_state;
+#define BOOT_FUNC __attribute__((section(".boot_flash_block")))
+#define APPLICATION_ADDRESS         0x08008000
+#define MSP_VERIFY_MASK            0x2FFE0000
+#define EMPTY_FLASH                0xFFFFFFFF
 
 
-unsigned char __attribute__((section(".custom_ram_block"))) custom_ram_buff[10];   //10 bytes
-unsigned char __attribute__((section(".custom_flash_block"))) custom_flash_buff[50];   //10 bytes
+typedef void (*func_ptr)(void);
+
+
+#define MEM_VERIFY_V2
+
+void JmpToApplication(void)
+{
+    uint32_t app_start_address;
+    func_ptr jump_to_app;
+
+    printf("Bootloader Started...\n\r");
+    for(int i = 0; i < 100000; i++){} /* Delay */
+    for(int i = 0; i < 100000; i++){} /* Delay */
+     
+    /* Version 1 of validation */
+#ifndef MEM_VERIFY_V1
+    if(((*(uint32_t *)APPLICATION_ADDRESS) & MSP_VERIFY_MASK) == 0x20000000)
+#endif
+
+    /* Version 2 of validation */
+#ifndef MEM_VERIFY_V2
+    if((*(uint32_t *)APPLICATION_ADDRESS) != EMPTY_FLASH)
+#endif
+    {
+        printf("MSP is valid, starting application...\n\r");
+        app_start_address = *(uint32_t *)(APPLICATION_ADDRESS + 4);
+        jump_to_app = (func_ptr)(app_start_address);
+    
+        /* Initialize the main stack pointer */
+        __set_MSP(*(uint32_t *)APPLICATION_ADDRESS);
+    
+        /*Jump to the application */
+        jump_to_app();
+
+    }
+    else
+    {
+        printf("No valid application found...\n\r");
+        for(int i = 0; i < 100000; i++){} /* Delay */
+        return;
+    }
+
+}
+
+void BOOT_FUNC _bootloader(void)
+{
+
+    GPIOB->ODR ^= USER_LED_PIN;  /* Turn on the LED */
+    for(int i = 0; i < 100000; i++){} /* Delay */
+    
+}
 
 int main(void)
 {
-    /* Enable clock access to GPIOB */
-    RCC->AHB2ENR |= GPIOBEN;
+  //  /* Enable clock access to GPIOB */
+  //  RCC->AHB2ENR |= GPIOBEN;
+//
+  //  /* Set PB3 AS OUTPUT MODE B7 = 0, B6 =  1*/
+  //  GPIOB->MODER |= (1U<<6);
+  //  GPIOB->MODER &=~ (1U<<7);
+//
+  //  /* Set PB7 as input B14 = 0, B15 = 0 */
+  //  GPIOB->MODER &=~ (1U<<14);
+  //  GPIOB->MODER &=~ (1U<<15);   
+    // Initialization code here
+    Uart2_RXTX_Init();
 
-    /* Set PB3 AS OUTPUT MODE B7 = 0, B6 =  1*/
-    GPIOB->MODER |= (1U<<6);
-    GPIOB->MODER &=~ (1U<<7);
-
-    /* Set PB7 as input B14 = 0, B15 = 0 */
-    GPIOB->MODER &=~ (1U<<14);
-    GPIOB->MODER &=~ (1U<<15); 
-
+	JmpToApplication();
     while(1)
     {
         //GPIOB->ODR |= USER_LED_PIN;  /* Turn on the LED */
         //GPIOB->ODR &= ~USER_LED_PIN; /* Turn off the LED */
         //GPIOB->ODR ^= USER_LED_PIN;  /* Toggle the LED */
         //for(int i = 0; i < 100000; i++){} /* Delay */
-        
-        if(GPIOB->IDR & PIN7) /* Check if the button is pressed */
-        {
-            GPIOB->BSRR = USER_LED_PIN;
-        }
-        else
-        {
-            GPIOB->BSRR = (1U << 19);
-        }
+
+        //_bootloader();
+        //printf("Applciation 1 is running...\n");
+        //for(int i = 0; i < 100000; i++){} /* Delay */
     }
     return 0;
 }
-
