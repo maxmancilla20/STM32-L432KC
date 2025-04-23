@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "stm32l4xx.h"
 #include "Uart.h"
+#include "GPIO.h"
 
 #define PIN3                (1U<<3) 
 #define USER_LED_PIN        (PIN3)
@@ -37,9 +38,31 @@
 #define MSP_VERIFY_MASK            0x2FFE0000
 #define EMPTY_FLASH                0xFFFFFFFF
 
+/*
+#define VECT_TAB_BASE_ADDRESS           FLASH_BASE
+#define VECT_TAB_OFFSET                 0x8000
+*/
+
 
 typedef void (*func_ptr)(void);
+struct Boot_Common_Apis
+{
+    void (*GPIO_Init)(void);
+    void (*GPIO_Toggle)(void);
+    void (*GPIO_On)(void);
+    void (*GPIO_Off)(void);
+    void (*Uart2_RXTX_Init)(void);
+    char (*read_uart2)(void);
 
+};
+struct Boot_Common_Apis Common_Apis __attribute__((section(".COMMON_CODE"))) = {
+    GPIO_Init,
+    GPIO_Toggle,
+    GPIO_On,
+    GPIO_Off,
+    Uart2_RXTX_Init,
+    read_uart2,
+};
 
 #define MEM_VERIFY_V2
 
@@ -119,3 +142,10 @@ int main(void)
     }
     return 0;
 }
+
+/*
+void SystemInit(void)
+{
+    SCB->VTOR = VECT_TAB_BASE_ADDRESS | VECT_TAB_OFFSET;
+}
+*/

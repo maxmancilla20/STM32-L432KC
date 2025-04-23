@@ -50,6 +50,7 @@
 									<listOptionValue builtIn="false" value="&quot;F:\Sandboxes\STM32\BareMetal_1\Inc\chip_headers\CMSIS\Device\ST\STM32L4xx\Include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;F:\Sandboxes\STM32\BareMetal_1\Inc\chip_headers\CMSIS\Include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;D:\Sandboxes\STM\L432LC_UART\Inc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;D:\Sandboxes\STM\L432KC_Boot\Inc&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.181679365" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -174,5 +175,12 @@
 			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 	</storageModule>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/L432KC_BM_3"/>
+		</configuration>
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/L432KC_BM_3"/>
+		</configuration>
+	</storageModule>
 </cproject>

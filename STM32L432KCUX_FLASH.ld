@@ -48,6 +48,7 @@ MEMORY
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 64K
   SRAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 32K
+  COMMON_CODE (xr)    : ORIGIN = 0x0800C000,   LENGTH = 32K
 }
 
 /* Sections */
@@ -58,9 +59,14 @@ SECTIONS
   .isr_vector :
   {
     . = ALIGN(4);
-    KEEP(*(.isr_vector)) /* Startup code */
+    KEEP(*(.isr_vector))
     . = ALIGN(4);
   } >FLASH
+
+  .COMMON_CODE 0x0800C000:
+  {
+    KEEP(*(.COMMON_CODE))
+  } >COMMON_CODE
 
   /*=======================================================================*/
   /*                           BOOTLOADER                                  */
