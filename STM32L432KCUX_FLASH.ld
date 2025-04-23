@@ -47,32 +47,19 @@ MEMORY
 {
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 64K
   SRAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 32K
-  COMMON_CODE (xr)    : ORIGIN = 0x0800C000,   LENGTH = 32K
+  FLASH    (rx)    : ORIGIN = 0x8008000,   LENGTH = 256K
 }
 
 /* Sections */
-/* If you need to add more memory sections, add them here */
 SECTIONS
 {
   /* The startup code into "FLASH" Rom type memory */
   .isr_vector :
   {
     . = ALIGN(4);
-    KEEP(*(.isr_vector))
+    KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } >FLASH
-
-  .COMMON_CODE 0x0800C000:
-  {
-    KEEP(*(.COMMON_CODE))
-  } >COMMON_CODE
-
-  /*=======================================================================*/
-  /*                           BOOTLOADER                                  */
-  /*=======================================================================*/
-
-     /*====================================================================*/
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
@@ -163,7 +150,6 @@ SECTIONS
 
   } >RAM AT> FLASH
 
-  
   _sisram2 = LOADADDR(.sram2);
 
   /* SRAM2 section
