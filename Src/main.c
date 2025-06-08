@@ -29,7 +29,7 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #define GPIOBEN (1U<<1)
 
 #define VECT_TAB_BASE_ADDRESS           FLASH_BASE
-#define VECT_TAB_OFFSET                 0x8000
+#define VECT_TAB_OFFSET                 0x4000
 
 char key = 0;
 /*
