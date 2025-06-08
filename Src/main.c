@@ -65,21 +65,13 @@ int main(void)
     common_apis->Uart2_RXTX_Init();
     common_apis->GPIO_Init();
 
-    printf("\n\rSTART APP!\n\r");
+    printf("\n\r=====START APP 2!=====\n\r");
+    
     while(1)
     {
 
-        for(int i = 0; i < 10000; i++); // Delay 1 second
-
-        if(common_apis->GPIO_Read())
-        {
-        	common_apis->GPIO_On();
-            printf("\n\rButton Pressed!\n\r");
-        }
-        else
-        {
-        	common_apis->GPIO_Off();
-        }
+        for(int i = 0; i < 100000; i++); // Delay 1 second
+        common_apis->GPIO_Toggle();
 
     }
     return 0;
