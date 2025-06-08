@@ -47,8 +47,8 @@ MEMORY
 {
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 64K
   SRAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 32K
-  CUSTOM_MEMORY (xr)    : ORIGIN = 0x0800C000,   LENGTH = 32K
+  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 16K
+  CUSTOM_MEMORY (xr)    : ORIGIN = 0x08010000,   LENGTH = 16K
 }
 
 /* Sections */
@@ -63,7 +63,7 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  .COMMON_APIS 0x0800C000 :
+  .COMMON_APIS 0x08010000 :
   {
     KEEP(*(.COMMON_APIS))
   } >CUSTOM_MEMORY
