@@ -46,22 +46,41 @@ char key = 0;
     void (*GPIO_Off)(void);
     void (*Uart2_RXTX_Init)(void);
     char (*read_uart2)(void);
+    uint8_t (*GPIO_Read)(void);
+    void (*write_uart2)(uint8_t data);
 };
+
+int __io_putchar(int ch)
+{
+	struct Boot_Common_Apis *common_apis = (struct Boot_Common_Apis *) 0x0800C000;
+    common_apis->write_uart2(ch);
+    return ch;
+}
 
 int main(void)
 {
     /* Shared memory */
     struct Boot_Common_Apis *common_apis = (struct Boot_Common_Apis *) 0x0800C000;
 
+    common_apis->Uart2_RXTX_Init();
     common_apis->GPIO_Init();
 
-    printf("START APP!\n\r");
+    printf("\n\rSTART APP!\n\r");
     while(1)
     {
 
-        for(int i = 0; i < 1000000; i++); // Delay 1 second
-        printf("App Running !\n\r");
-        common_apis->GPIO_Toggle();
+        for(int i = 0; i < 10000; i++); // Delay 1 second
+
+        if(common_apis->GPIO_Read())
+        {
+        	common_apis->GPIO_On();
+            printf("\n\rButton Pressed!\n\r");
+        }
+        else
+        {
+        	common_apis->GPIO_Off();
+        }
+
     }
     return 0;
 }
