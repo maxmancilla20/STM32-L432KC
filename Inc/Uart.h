@@ -16,6 +16,8 @@
  void Uart2_RXTX_Init(void);
  char read_uart2(void);
  void write_uart2(uint8_t data);
+
+ #define CR1_RXFNEIE         (1U<<5)
  
  #endif /* UART_H_ */
  

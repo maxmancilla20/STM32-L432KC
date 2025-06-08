@@ -85,7 +85,10 @@
      Note: Use only = to clear the UART reg*/
      USART2->CR1 = (CR1_TE | CR1_RE);
      /* Enable UART2 */
-     USART2->CR1 |= CR1_UE;
+     USART2->CR1 |= (CR1_UE | CR1_RXFNEIE); /* Enable RXNE interrupt */
+
+     /* Enable the UART2 interrupt in NVIC */
+     NVIC_EnableIRQ(USART2_IRQn);	
  }
  /*
   * uart_set_baud_rate function
