@@ -29,9 +29,9 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #define GPIOBEN (1U<<1)
 
 #define VECT_TAB_BASE_ADDRESS           FLASH_BASE
-#define VECT_TAB_OFFSET                 0x8000
+#define VECT_TAB_OFFSET                 0xC000
 
-char key = 0;
+uint8_t Button_Flag = 0;
 /*
  * main function
  * 
@@ -65,13 +65,27 @@ int main(void)
     common_apis->Uart2_RXTX_Init();
     common_apis->GPIO_Init();
 
-    printf("\n\r=====START APP 2!=====\n\r");
+    printf("\n\r=====START Factory App!=====\n\r");
     
     while(1)
     {
 
-        for(int i = 0; i < 100000; i++); // Delay 1 second
-        common_apis->GPIO_Toggle();
+        for(int i = 0; i < 10000; i++); // Delay 1 second
+        
+        if(common_apis->GPIO_Read())
+        {
+            printf("\n\rButton Pressed!\n\r");
+            Button_Flag ^= 1;
+        }
+
+       if(Button_Flag)
+       {
+            common_apis->GPIO_Toggle();
+       }
+       else
+       {
+            common_apis->GPIO_Off();
+       }
 
     }
     return 0;
