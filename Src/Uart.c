@@ -32,7 +32,6 @@
  
  static void uart_set_baud_rate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t BaudRate);
  static uint16_t compute_uart_bd(uint32_t PeriphClk, uint32_t BaudRate);
- void write_uart2(uint8_t data);
  
  int __io_putchar(int ch)
  {
@@ -69,7 +68,7 @@
      GPIOA->MODER &= ~(1U << 6); /* Clear bit 6 */
      GPIOA->MODER |= (1U << 7); /* Set bit 7 */
  
-     /* Set PA3 alternate function type to UART_TX (AF07)*/
+     /* Set PA3 alternate function type to UART_RX (AF07)*/
      GPIOA->AFR[0] |= (1U << 12); /* Set bit 12 */
      GPIOA->AFR[0] |= (1U << 13); /* Set bit 13 */
      GPIOA->AFR[0] |= (1U << 14); /* Set bit 14 */

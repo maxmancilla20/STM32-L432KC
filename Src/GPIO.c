@@ -34,3 +34,8 @@ void GPIO_Off(void)
 {
     GPIOB->ODR &= ~USER_LED_PIN; /* Turn off the LED */
 }
+
+uint8_t GPIO_Read(void)
+{
+    return (GPIOB->IDR & PIN7) ? 1 : 0; /* Read the state of PB7 */
+}

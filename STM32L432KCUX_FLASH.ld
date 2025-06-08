@@ -48,7 +48,7 @@ MEMORY
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 64K
   SRAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 32K
-  COMMON_CODE (xr)    : ORIGIN = 0x0800C000,   LENGTH = 32K
+  CUSTOM_MEMORY (xr)    : ORIGIN = 0x0800C000,   LENGTH = 32K
 }
 
 /* Sections */
@@ -63,10 +63,10 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  .COMMON_CODE 0x0800C000:
+  .COMMON_APIS 0x0800C000 :
   {
-    KEEP(*(.COMMON_CODE))
-  } >COMMON_CODE
+    KEEP(*(.COMMON_APIS))
+  } >CUSTOM_MEMORY
 
   /*=======================================================================*/
   /*                           BOOTLOADER                                  */
@@ -99,6 +99,13 @@ SECTIONS
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     . = ALIGN(4);
   } >FLASH
+
+
+  .custom_section :
+  {
+    KEEP(*(.custom_section))
+  } >CUSTOM_MEMORY
+  
 
   .ARM.extab (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
   {

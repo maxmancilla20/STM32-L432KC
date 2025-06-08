@@ -53,15 +53,19 @@ struct Boot_Common_Apis
     void (*GPIO_Off)(void);
     void (*Uart2_RXTX_Init)(void);
     char (*read_uart2)(void);
-
+    uint8_t (*GPIO_Read)(void);
+    void (*write_uart2)(uint8_t data);
 };
-struct Boot_Common_Apis Common_Apis __attribute__((section(".COMMON_CODE"))) = {
+
+struct Boot_Common_Apis Common_Apis __attribute__((section(".COMMON_APIS"))) = {
     GPIO_Init,
     GPIO_Toggle,
     GPIO_On,
     GPIO_Off,
     Uart2_RXTX_Init,
     read_uart2,
+    GPIO_Read,
+    write_uart2
 };
 
 #define MEM_VERIFY_V2
@@ -71,7 +75,7 @@ void JmpToApplication(void)
     uint32_t app_start_address;
     func_ptr jump_to_app;
 
-    printf("Bootloader Started...\n\r");
+    printf("\n\rBootloader Started...\n\r");
     for(int i = 0; i < 100000; i++){} /* Delay */
     for(int i = 0; i < 100000; i++){} /* Delay */
      
@@ -85,7 +89,7 @@ void JmpToApplication(void)
     if((*(uint32_t *)APPLICATION_ADDRESS) != EMPTY_FLASH)
 #endif
     {
-        printf("MSP is valid, starting application...\n\r");
+        printf("\n\rMSP is valid, starting application...\n\r");
         app_start_address = *(uint32_t *)(APPLICATION_ADDRESS + 4);
         jump_to_app = (func_ptr)(app_start_address);
     
@@ -98,7 +102,7 @@ void JmpToApplication(void)
     }
     else
     {
-        printf("No valid application found...\n\r");
+        printf("\n\rNo valid application found...\n\r");
         for(int i = 0; i < 100000; i++){} /* Delay */
         return;
     }
@@ -115,30 +119,18 @@ void BOOT_FUNC _bootloader(void)
 
 int main(void)
 {
-  //  /* Enable clock access to GPIOB */
-  //  RCC->AHB2ENR |= GPIOBEN;
-//
-  //  /* Set PB3 AS OUTPUT MODE B7 = 0, B6 =  1*/
-  //  GPIOB->MODER |= (1U<<6);
-  //  GPIOB->MODER &=~ (1U<<7);
-//
-  //  /* Set PB7 as input B14 = 0, B15 = 0 */
-  //  GPIOB->MODER &=~ (1U<<14);
-  //  GPIOB->MODER &=~ (1U<<15);   
+  
     // Initialization code here
     Uart2_RXTX_Init();
+    GPIO_Init();
+
 
 	JmpToApplication();
     while(1)
     {
-        //GPIOB->ODR |= USER_LED_PIN;  /* Turn on the LED */
-        //GPIOB->ODR &= ~USER_LED_PIN; /* Turn off the LED */
-        //GPIOB->ODR ^= USER_LED_PIN;  /* Toggle the LED */
-        //for(int i = 0; i < 100000; i++){} /* Delay */
+        printf("ERROR:...\n");
+        for(int i = 0; i < 100000; i++){} /* Delay */
 
-        //_bootloader();
-        //printf("Applciation 1 is running...\n");
-        //for(int i = 0; i < 100000; i++){} /* Delay */
     }
     return 0;
 }
