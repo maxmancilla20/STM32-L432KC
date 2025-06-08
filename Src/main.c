@@ -52,7 +52,7 @@ uint8_t Button_Flag = 0;
 
 int __io_putchar(int ch)
 {
-	struct Boot_Common_Apis *common_apis = (struct Boot_Common_Apis *) 0x0800C000;
+	struct Boot_Common_Apis *common_apis = (struct Boot_Common_Apis *) 0x08010000;
     common_apis->write_uart2(ch);
     return ch;
 }
@@ -60,7 +60,7 @@ int __io_putchar(int ch)
 int main(void)
 {
     /* Shared memory */
-    struct Boot_Common_Apis *common_apis = (struct Boot_Common_Apis *) 0x0800C000;
+    struct Boot_Common_Apis *common_apis = (struct Boot_Common_Apis *) 0x08010000;
 
     common_apis->Uart2_RXTX_Init();
     common_apis->GPIO_Init();
