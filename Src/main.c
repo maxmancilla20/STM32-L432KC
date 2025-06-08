@@ -104,7 +104,7 @@ static void jump_to_app(uint32_t app_start_address)
     }
     else
     {
-        printf("\n\rNo valid application found...\n\r");
+        printf("\n\r...No valid application found...\n\r");
         for(int i = 0; i < 100000; i++){} /* Delay */
         return;
     }
@@ -128,17 +128,19 @@ int main(void)
 
     if(GPIO_Read())
     {
-        printf("\n\r=========================\n\r");
-        printf("\n\r=====Button Pressed======\n\r");
-        printf("\n\r=========================\n\r");
+        printf("\n\r=============================\n\r");
+        printf("\n\r=====Button Pressed==========\n\r");
+        printf("\n\r=============================\n\r");
         printf("\n\r");
-        printf("\n\r=========================\n\r");
-        printf("\n\r=Select App2 or Factory==\n\r");
-        printf("\n\r=========================\n\r");
-        printf("\n\r===Press '1' to App2=====\n\r"); 
-        printf("\n\r=========================\n\r");
-        printf("\n\r===Press '2' to Factory==\n\r");
-        printf("\n\r=========================\n\r");
+        printf("\n\r=============================\n\r");
+        printf("\n\r=Select App2 or Factory======\n\r");
+        printf("\n\r=============================\n\r");
+        printf("\n\r===Press '1' to App2=========\n\r"); 
+        printf("\n\r=============================\n\r");
+        printf("\n\r===Press '2' to Factory======\n\r");
+        printf("\n\r=============================\n\r");
+        printf("\n\r=Press any other for default=\n\r");
+        printf("\n\r=============================\n\r");
         printf("\n\r");
 
         while(1)
@@ -148,11 +150,11 @@ int main(void)
     }
     else
     {
-        printf("\n\r=========================\n\r");
-        printf("\n\r====Button NOT Pressed===\n\r");
-        printf("\n\r=========================\n\r");
-        printf("\n\r====Running Default App==\n\r");
-        printf("\n\r=========================\n\r");
+        printf("\n\r=============================\n\r");
+        printf("\n\r====Button NOT Pressed=======\n\r");
+        printf("\n\r=============================\n\r");
+        printf("\n\r====Running Default App======\n\r");
+        printf("\n\r=============================\n\r");
         for(int i = 0; i < 100000; i++){} /* Delay */
         jump_to_app(DEFAULT_APP_ADDRESS); /* Jump to the application */
     }
@@ -185,7 +187,7 @@ static void process_btldr_cmds(SYS_APPS curr_app)
             jump_to_app(FACTORY_APP_ADDRESS);
             break;
         default:
-            //printf("Invalid application selected.\n");
+            jump_to_app(DEFAULT_APP_ADDRESS);
             break;
     }
 }
@@ -197,19 +199,19 @@ static void uart_callback(void)
     if(g_app_key == '1')
     {   
         g_un_key = APP2; /* Set the application key */
-        printf("Key 1 pressed, Running APP2...\n");
+        printf("\n\rKey 1 pressed, Running APP2...\n\r");
 
     }
     else if(g_app_key == '2')
     {   
         g_un_key = FACTORY_APP; /* Set the application key */
-        printf("Key 2 pressed, Running Factory App...\n");
+        printf("\n\rKey 2 pressed, Running Factory App...\n\r");
 
     }
     else 
     {   
         g_un_key = 0; /* Invalid key */
-        printf("Invalid key pressed: %c\n", g_app_key);
+        printf("\n\rDefault App Selected...\n\r");
     }
 }
 
