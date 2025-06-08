@@ -74,7 +74,6 @@ int main(void)
         
         if(common_apis->GPIO_Read())
         {
-            printf("\n\rButton Pressed!\n\r");
             Button_Flag ^= 1;
         }
 
