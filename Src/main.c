@@ -8,15 +8,19 @@
  * */
 #include <stdint.h>
 #include "stm32l4xx.h"
+#include "adc.h"
+#include "Uart.h"
 
 #define PIN3                (1U<<3) 
 #define USER_LED_PIN        (PIN3)
 #define GPIOAEN             (1U<<0)
 #define GPIOBEN             (1U<<1)
 
+
+uint32_t adc_value = 0;
+
 int main(void)
 {
-    int8_t FlagStatus = 0;
 
     /* Enable clock access to GPIOB */
     RCC->AHB2ENR |= GPIOBEN;
@@ -25,27 +29,33 @@ int main(void)
     GPIOB->MODER |= (1U<<6);
     GPIOB->MODER &=~ (1U<<7);
 
+    Uart2_RXTX_Init();
+    pa0_adc_init();
+    start_conversion();
+
+
+    printf("ADC Value measuremtn start\n\r");
     while(1)
     {
+        /* Read ADC value */
+        adc_value = adc_read();
+        printf("ADC Value: %lu\n\r", adc_value);
+    }
+
+    return 0;
+}
+
+/*
         if(FlagStatus == 0)
         {
-            /* Turn on the LED */
+  
             GPIOB->ODR |= USER_LED_PIN;
             FlagStatus = 1;
         }
         else
         {
-            /* Turn off the LED */
+  
             GPIOB->ODR &= ~USER_LED_PIN;
             FlagStatus = 0;
         }
-        /* Toggle the LED */
-        //GPIOB->ODR ^= USER_LED_PIN;
-
-
-        /* Delay */
-        for(int i = 0; i < 100000; i++){}
-    }
-
-    return 0;
-}
+*/

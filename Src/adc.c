@@ -25,7 +25,9 @@
 //ADC1_IN17 TEMP SENSOR
 //PA0 ADC1_IN5
 /* ADC is Connected to AHB2 bus*/
+//ADC_IN0
 #include "stm32l4xx.h"
+#include "adc.h"
 
 
 #define ADC1EN (1U<<13)
@@ -34,6 +36,16 @@
 #define ADC_CH5 (5U<<6)
 #define ADC_SEQ_LEN_1 0x00 
 #define CR_ADEN (1U<<0)
+#define ISR_EOC (1U<<2)
+#define ISR_ADRDY (1U<<0)
+#define CR_ADSTART (1U<<2)
+#define IER_ADRDYIE (1U<<0)
+#define IER_EOCIE (1U<<2)
+#define CR_ADVREGEN (1U<<28)
+#define CR_CONTINUOUS (1U<<1)
+#define CFGR_CONT (1U<<13)
+#define CR_DEEPPWD (1U<<29)
+
 
 void pa0_adc_init(void)
 {
@@ -53,16 +65,51 @@ void pa0_adc_init(void)
 
   /* Configure ADC Parameters */
   /*Conversion sequence start*/
-  ADC1->SQR1 = ADC_CH5;
-  //ADC1->SQR1 |= ADC_SEQ_LEN_1;
-  
-  ADC1->CR |= CR_ADEN;
-  /*Conversion sequence lenght*/
+
+  ADC1_COMMON->CCR &= ~ADC_CCR_CKMODE_0;
+  ADC1_COMMON->CCR |= ADC_CCR_CKMODE_1;
+
+  ADC1->CFGR |= ADC_CFGR_CONT; // Set continuous mode
+
+  ADC1->SQR1 |= ADC_SEQ_LEN_1;
+
+  ADC1->SQR1 = (5U << ADC_SQR1_SQ1_Pos); 
+
+  ADC1->CR &= ~ADC_CR_DEEPPWD; // Exit deep power down mode
+  ADC1->CR |= ADC_CR_ADVREGEN; // Enable voltage regulator for ADC
+
+  ADC1->CR |= ADC_CR_ADCAL;
+
+  ADC1->CR |= ADC_CR_ADEN; // Enable ADC
+
+  while(!(ADC1->ISR & ADC_ISR_ADRDY)); // Wait for ADC ready
+
+  //ADC1->IER |= ADC_IER_ADRDYIE | ADC_IER_EOCIE;
+
+  ADC1->ISR |= ADC_ISR_ADRDY;
+
+  /*Conversion sequence lenght 21.4.9 */
   /*Enable ADC Module*/
 }
 
 void start_conversion(void)
 {
+  /* Enabe Continuos Conversion */
+  ADC1->CFGR |= ADC_CFGR_CONT; 
   /* Start ADC Conversion */
-  ADC1->CR |= CR_ADEN;
+  ADC1->CR |= ADC_CR_ADSTART;
+}
+
+uint32_t adc_read(void)
+{
+  /* Wait for conversion to complete */
+  while (!(ADC1->ISR & ISR_EOC)); // Wait for EOC (End of Conversion)
+
+  /* Clear the EOC flag */
+  ADC1->ISR |= ISR_EOC;
+
+  /* Read the converted value */
+  uint32_t adc_value = ADC1->DR;
+
+  return adc_value;
 }
