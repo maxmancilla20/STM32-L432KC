@@ -1,2 +1,4 @@
 /Debug/
 /STM32Cube_FW_L4_V1.18.0/
+.vscode/c_cpp_properties.json
+.vscode/settings.json

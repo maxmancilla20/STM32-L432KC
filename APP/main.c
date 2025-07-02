@@ -25,11 +25,16 @@ GPIOB->ODR |= USER_LED_PIN; // Turn on the LED
 GPIOB->ODR &= ~USER_LED_PIN; // Turn off the LED
 GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 */
+#include "Std_Types.h"
 #include <stdio.h>
-#include <stdint.h>
-#include "stm32l4xx.h"
+#include "Mcu.h"
+#include "Mcu_Cfg.h"
 #include "Uart.h"
-#include "GPIO.h"
+#include "Uart_Cfg.h"
+#include "Dio.h"
+#include "Dio_Cfg.h"
+
+extern Mcu_ConfigType McuDriverConfiguration;
 /*
  * main function
  * 
@@ -37,10 +42,10 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
  */
 int main(void)
 {
-  
     // Initialization code here
+    Mcu_Init(&McuDriverConfiguration);
     Uart2_RXTX_Init(); // Initialize UART2 for transmission and reception
-    GPIO_Init(); // Initialize GPIO
+    Dio_Init(); // Initialize GPIO
   
     while(1)
     {

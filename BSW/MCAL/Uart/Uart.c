@@ -1,12 +1,13 @@
-/*
- * Uart.c
- * 
- * This file contains the main function and UART2 initialization function for the STM32L4 microcontroller.
- * 
- * Author: Maximiliano Mancilla
- */
+/****************************************************************************************************
+ * @file           : Uart.c
+ * @author         : Maximiliano Mancilla
+ * @date           : Jun 28, 2025
+ * @brief          : The UART Driver handles initialization, transmission, and reception for UART2.
+ *                   This module abstracts the UART peripheral for the AUTOSAR MCAL layer.
+ ***************************************************************************************************/
 
 #include "Uart.h"
+#include "Uart_Cfg.h"
 
 #define GPIOAEN             (1U<<0)
 #define GPIOBEN             (1U<<1)
@@ -14,7 +15,6 @@
 
 #define SYSFREQ_4_MHZ       4000000U
 
-#define UART2_BAUD_RATE     9600U
 
 #define CR1_TE              (1U<<3)
 #define CR1_RE              (1U<<2)
@@ -42,7 +42,7 @@ void Uart2_RXTX_Init(void)
 {
     /* ================ CONFIGURE GPIOA ================= */
     /* Enable port access to GPIOA */
-    RCC->AHB2ENR |= GPIOAEN;
+    //RCC->AHB2ENR |= GPIOAEN;
 
     /* ================ TX CFG ===================*/
     /* Set PA2 mode to alternate function mode */

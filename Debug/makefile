@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (12.3.rel1)
+# Toolchain: GNU Tools for STM32 (13.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -10,7 +10,12 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include Startup/subdir.mk
--include Src/subdir.mk
+-include BSW/MCAL/Uart/subdir.mk
+-include BSW/MCAL/Mcu/subdir.mk
+-include BSW/MCAL/Lin/subdir.mk
+-include BSW/MCAL/Dio/subdir.mk
+-include BSW/MCAL/Can/subdir.mk
+-include APP/subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -33,34 +38,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := L432KC_BM_1
+BUILD_ARTIFACT_NAME := L432KC_BM_2
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-L432KC_BM_1.elf \
+L432KC_BM_2.elf \
 
 MAP_FILES += \
-L432KC_BM_1.map \
+L432KC_BM_2.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-L432KC_BM_1.list \
+L432KC_BM_2.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: L432KC_BM_1.elf secondary-outputs
+main-build: L432KC_BM_2.elf secondary-outputs
 
 # Tool invocations
-L432KC_BM_1.elf L432KC_BM_1.map: $(OBJS) $(USER_OBJS) F:\Sandboxes\STM32\BareMetal_1\STM32L432KCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "L432KC_BM_1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"F:\Sandboxes\STM32\BareMetal_1\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="L432KC_BM_1.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+L432KC_BM_2.elf L432KC_BM_2.map: $(OBJS) $(USER_OBJS) D:\Sandboxes\STM\L432KC\GPIO\STM32L432KCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "L432KC_BM_2.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Sandboxes\STM\L432KC\GPIO\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="L432KC_BM_2.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -69,14 +74,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-L432KC_BM_1.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "L432KC_BM_1.list"
+L432KC_BM_2.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "L432KC_BM_2.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) L432KC_BM_1.elf L432KC_BM_1.list L432KC_BM_1.map default.size.stdout
+	-$(RM) L432KC_BM_2.elf L432KC_BM_2.list L432KC_BM_2.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
