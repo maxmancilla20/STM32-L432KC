@@ -31,4 +31,4 @@ void pa0_adc_init(void);
 void start_conversion(void);
 uint32_t adc_read(void);
 
-#endif /*
+#endif /* ADC_H_ */
