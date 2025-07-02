@@ -40,13 +40,18 @@ extern Mcu_ConfigType McuDriverConfiguration;
  * 
  * The main function initializes the system and enters an infinite loop.
  */
+
+ uint32_t adc_value = 0;
+
 int main(void)
 {
     // Initialization code here
     Mcu_Init(&McuDriverConfiguration);
     Uart2_RXTX_Init(); // Initialize UART2 for transmission and reception
     Dio_Init(); // Initialize GPIO
-  
+    pa0_adc_init();
+    start_conversion();
+
     while(1)
     {
         //GPIOB->ODR |= USER_LED_PIN;  /* Turn on the LED */
@@ -54,6 +59,10 @@ int main(void)
         //GPIOB->ODR ^= USER_LED_PIN;  /* Toggle the LED */
         //for(int i = 0; i < 100000; i++){} /* Delay */
         //key = read_uart2(); // Read the key pressed
+        
+        /* Read ADC value */
+        //adc_value = adc_read();
+        //printf("ADC Value: %lu\n\r", adc_value);
   
         for(int i = 0; i < 100000; i++){} /* Delay */
         GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
