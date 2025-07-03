@@ -35,6 +35,8 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #include "Dio_Cfg.h"
 #include "Adc.h"
 #include "Adc_Cfg.h"
+#include "Gpt.h"
+#include "Gpt_Cfg.h"
 
 extern Mcu_ConfigType McuDriverConfiguration;
 /*
@@ -66,7 +68,7 @@ int main(void)
         //adc_value = adc_read();
         //printf("ADC Value: %lu\n\r", adc_value);
   
-        for(int i = 0; i < 100000; i++){} /* Delay */
+        SystickDelay_Ms(1000);
         GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
    
     }
