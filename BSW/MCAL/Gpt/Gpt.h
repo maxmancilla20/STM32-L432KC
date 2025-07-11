@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include "Std_Types.h"
 
+#define SR_UIF            (1U << 0) // Update interrupt flag
 /******************************************************
  **                Type definitions                  **
  ******************************************************/
@@ -24,6 +25,8 @@ void Gpt_Init(void);
 void Gpt_StartTimer(Gpt_ChannelType timerId, uint32_t value);
 void Gpt_StopTimer(Gpt_ChannelType timerId);
 void SystickDelay_Ms(uint32_t delay);
+void tim2_1hz_init(void);
+void tim2_1hz_delay(void);
 /******************************************************
  **                Macros and Constants               **
  ******************************************************/
