@@ -27,6 +27,7 @@ void Gpt_StopTimer(Gpt_ChannelType timerId);
 void SystickDelay_Ms(uint32_t delay);
 void tim2_1hz_init(void);
 void tim2_1hz_delay(void);
+void tim2_output_pb3_compare_1hz(void);
 /******************************************************
  **                Macros and Constants               **
  ******************************************************/

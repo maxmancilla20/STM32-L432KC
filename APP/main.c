@@ -55,8 +55,9 @@ int main(void)
     Dio_Init(); // Initialize GPIO
     pa0_adc_init();
     start_conversion();
-    tim2_1hz_init(); // Initialize Timer 2 for 1Hz operation
+    //tim2_1hz_init(); // Initialize Timer 2 for 1Hz operation
 
+    tim2_output_pb3_compare_1hz(); // Initialize Timer 2 for output compare on PB3
     while(1)
     {
         //GPIOB->ODR |= USER_LED_PIN;  /* Turn on the LED */
@@ -70,10 +71,10 @@ int main(void)
         //printf("ADC Value: %lu\n\r", adc_value);
         //SystickDelay_Ms(1000);
 
-        tim2_1hz_delay(); // Wait for 1 second (1Hz)
-
-        GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
-        printf("LED toggled\n\r");
+        //tim2_1hz_delay(); // Wait for 1 second (1Hz)
+        //GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
+        
+        //printf("LED toggled\n\r");
     }
     return 0;
 }

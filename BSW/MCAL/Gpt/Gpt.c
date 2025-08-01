@@ -20,6 +20,46 @@
 //#define TIM_CR1_CEN             (1U << 0) // Timer enable bit in CR1 register
 uint32_t SystemCoreClock = 4000000U;
 
+/* Timer as an output compare */
+/* Controlling PB3 Cfg  TIM2 CH2*/
+#define OC_TOGGLE               (1U << 12) | (1u << 13) // Output compare toggle mode bit 
+#define CCER_CC2E               (1U << 4) // Update interrupt flag bit in SR register
+
+
+void tim2_output_pb3_compare_1hz(void)
+{
+    /* Enable Clock Access to GPIOB */
+    //RCC->AHB2ENR |= GPIOBEN; // Enable clock for GPIOB this is set in Mcu.c
+
+    /* Set PB3 mode to alternate function */
+    GPIOB->MODER &= ~(3U << 6); // clear both bits
+    GPIOB->MODER |=  (2U << 6); // Set'10' in MODER[7:6]
+
+    /* Set PB3 alternate function type to TIM2_CH2 (AF1) */
+    GPIOB->AFR[0] &= ~(0xF << 12); // Clear 4 bits for PB3
+    GPIOB->AFR[0] |=  (0x1 << 12); // Set AF1 for PB3
+
+    /* Enable Clock Access to Timer 2 */
+    RCC->APB1ENR1 |= TIM2EN; // Enable clock for Timer 2
+
+    /* Set Prescaler Value */
+    // 4 000 000 / 1 000 = 4 000 Hz, so for 1 Hz we need a prescaler of 1600
+    TIM2->PSC = (SystemCoreClock / 1000) - 1; // Set prescaler for 1 Hz tick
+    
+    /* Set Auto-reaload Value */
+    TIM2->ARR = 1000 - 1; // 4 000 / 4 000 = 1
+
+    /* Enable Tim2 CH2 in compare mode */
+    TIM2->CCMR1 &= ~(0xFF); // Limpia CCMR2 para CH2
+    TIM2->CCMR1 |= OC_TOGGLE; // Set output compare mode for channel 2
+    TIM2->CCER |= CCER_CC2E; // Enable output for channel 2
+
+    /* Clear Counter */
+    TIM2->CNT = 0; // Reset the counter to 0
+
+    /* Enable Timer */
+    TIM2->CR1 |= TIM_CR1_CEN; // Enable Timer 2
+}
 
 void Gpt_Init(void)
 {
