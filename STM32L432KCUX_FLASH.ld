@@ -7,8 +7,8 @@
 **
 **  Abstract    : Linker script for NUCLEO-L432KC Board embedding STM32L432KCUx Device from stm32l4 series
 **                      256KBytes FLASH
-**                      64KBytes RAM
-**                      16KBytes SRAM2
+**                      48KBytes RAM
+**                      16KBytes RAM2
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -23,7 +23,7 @@
 ******************************************************************************
 ** @attention
 **
-** Copyright (c) 2024 STMicroelectronics.
+** Copyright (c) 2025 STMicroelectronics.
 ** All rights reserved.
 **
 ** This software is licensed under terms that can be found in the LICENSE file
@@ -45,8 +45,8 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 64K
-  SRAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
+  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 48K
+  RAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 256K
 }
 
@@ -149,25 +149,6 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
 
   } >RAM AT> FLASH
-
-  _sisram2 = LOADADDR(.sram2);
-
-  /* SRAM2 section
-  *
-  * IMPORTANT NOTE!
-  * If initialized variables will be placed in this section,
-  * the startup code needs to be modified to copy the init-values.
-  */
-  .sram2 :
-  {
-    . = ALIGN(4);
-    _ssram2 = .;       /* create a global symbol at sram2 start */
-    *(.sram2)
-    *(.sram2*)
-
-    . = ALIGN(4);
-    _esram2 = .;       /* create a global symbol at sram2 end */
-  } >SRAM2 AT> FLASH
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
