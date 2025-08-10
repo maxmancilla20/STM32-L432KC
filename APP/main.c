@@ -46,6 +46,7 @@ extern Mcu_ConfigType McuDriverConfiguration;
  */
 
  uint32_t adc_value = 0;
+ uint32_t timestamp = 0;
 
 int main(void)
 {
@@ -57,7 +58,9 @@ int main(void)
     start_conversion();
     //tim2_1hz_init(); // Initialize Timer 2 for 1Hz operation
 
-    tim2_output_pb3_compare_1hz(); // Initialize Timer 2 for output compare on PB3
+    //tim2_output_pb3_compare_1hz(); // Initialize Timer 2 for output compare on PB3
+    //tim2_input_capture(); // Jumper from PB3 to PA8
+
     while(1)
     {
         //GPIOB->ODR |= USER_LED_PIN;  /* Turn on the LED */
@@ -75,6 +78,11 @@ int main(void)
         //GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
         
         //printf("LED toggled\n\r");
+
+        /* Wait until edge is captured */
+        //while(!(TIM1->SR & SR_CC1IF)) {} // Wait for the capture/compare interrupt flag
+        /* Read captured value */
+        //timestamp = TIM1->CCR1; // Read the captured value from channel 1
     }
     return 0;
 }
