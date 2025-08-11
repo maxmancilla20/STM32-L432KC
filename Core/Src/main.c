@@ -30,12 +30,12 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void *argument);
-
-
 /* Redirect  printf to UART 2*/
 int __io_putchar(int ch);
+/* Tasks */
+void vGreenLedControllerTask( void * pvParameters );
+void vRandomTextGeneratorTask( void * pvParameters );
 
-int msg[1] = {'H'};
 
 int main(void)
 {
@@ -49,14 +49,54 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
 
+  /* Tasks Creations */
+  xTaskCreate(vGreenLedControllerTask, 
+              "Green Led Controller", 
+              configMINIMAL_STACK_SIZE, 
+              NULL, /* Arguments */
+              tskIDLE_PRIORITY + 2,
+              NULL);
+  
+    xTaskCreate(vRandomTextGeneratorTask, 
+              "Random Test Generator", 
+              configMINIMAL_STACK_SIZE, 
+              NULL, /* Arguments */
+              tskIDLE_PRIORITY + 1,
+              NULL);
 
+  /* Start scheduler */
+  vTaskStartScheduler();
+  /* We should never get here as control is now taken by the scheduler */
   while (1)
   {
-    printf("Hello World!\n\r");
+    printf("ERROR\n\r");
   }
-
 }
 
+void vGreenLedControllerTask( void * pvParameters )
+{
+    /* As per most tasks, this task is implemented in an infinite loop. */
+    while(1)
+    {
+        /* Toggle the LED each 1000ms */
+        printf("Toggle Green LED\n\r");
+        HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+        vTaskDelay( 1000 / portTICK_PERIOD_MS );
+    }
+}
+
+void vRandomTextGeneratorTask( void * pvParameters )
+{
+    /* As per most tasks, this task is implemented in an infinite loop. */
+    while(1)
+    {
+        /* Generate a random text each 500ms */
+        printf("Random Text \n\r");
+        vTaskDelay( 500 / portTICK_PERIOD_MS );
+    }
+}
+
+/* Redirect  printf to UART 2*/
 int __io_putchar(int ch)
 {
 	HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
