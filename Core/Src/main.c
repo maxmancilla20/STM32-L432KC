@@ -29,7 +29,7 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-void StartDefaultTask(void *argument);
+
 /* Redirect  printf to UART 2*/
 int __io_putchar(int ch);
 /* Tasks */
@@ -44,7 +44,6 @@ int main(void)
   HAL_Init();
 
   SystemClock_Config();
-
 
   MX_GPIO_Init();
   MX_USART2_UART_Init();
