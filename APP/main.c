@@ -37,6 +37,8 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #include "Adc_Cfg.h"
 #include "Gpt.h"
 #include "Gpt_Cfg.h"
+#include "Can.h"
+#include "Can_Cfg.h"
 
 extern Mcu_ConfigType McuDriverConfiguration;
 /*

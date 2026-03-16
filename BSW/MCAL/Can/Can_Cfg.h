@@ -8,6 +8,5 @@
 #ifndef CAN_CFG_H_
 #define CAN_CFG_H_
 
-// Add CAN configuration macros and structures here
 
 #endif /* CAN_CFG_H_ */
