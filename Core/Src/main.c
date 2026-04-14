@@ -24,6 +24,10 @@
 
 UART_HandleTypeDef huart2;
 
+/* Task Handles, allow task modification in runtime */
+TaskHandle_t GreenLedController_handle = NULL;
+TaskHandle_t RandomTextGenerator_handle = NULL;
+
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -52,16 +56,16 @@ int main(void)
   xTaskCreate(vGreenLedControllerTask, 
               "Green Led Controller", 
               configMINIMAL_STACK_SIZE, 
-              NULL, /* Arguments */
+              NULL,                           /* Arguments */
               tskIDLE_PRIORITY + 2,
-              NULL);
+              &GreenLedController_handle);  /* Task Handle */
   
     xTaskCreate(vRandomTextGeneratorTask, 
               "Random Test Generator", 
               configMINIMAL_STACK_SIZE, 
               NULL, /* Arguments */
               tskIDLE_PRIORITY + 1,
-              NULL);
+              &RandomTextGenerator_handle); /* Task Handle */
 
   /* Start scheduler */
   vTaskStartScheduler();
@@ -91,7 +95,9 @@ void vRandomTextGeneratorTask( void * pvParameters )
     {
         /* Generate a random text each 500ms */
         printf("Random Text \n\r");
-        vTaskDelay( 500 / portTICK_PERIOD_MS );
+        vTaskPrioritySet( RandomTextGenerator_handle, tskIDLE_PRIORITY + 3 ); /* Increase Task Priority */
+        vTaskDelay( 1000 / portTICK_PERIOD_MS );
+        
     }
 }
 
