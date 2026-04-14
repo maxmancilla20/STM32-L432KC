@@ -23,6 +23,10 @@
 
 
 UART_HandleTypeDef huart2;
+uint32_t GreenTaskProfier = 0;
+uint32_t RandomTextGeneratorProfier = 0;
+uint32_t GreenLedController_Priority = 0;
+uint32_t SuspendMonitor = 0;
 
 /* Task Handles, allow task modification in runtime */
 TaskHandle_t GreenLedController_handle = NULL;
@@ -78,12 +82,27 @@ int main(void)
 
 void vGreenLedControllerTask( void * pvParameters )
 {
+    int i = 0;
     /* As per most tasks, this task is implemented in an infinite loop. */
     while(1)
     {
         /* Toggle the LED each 1000ms */
-        printf("Toggle Green LED\n\r");
+        GreenTaskProfier++;
+        GreenLedController_Priority = uxTaskPriorityGet( GreenLedController_handle ); /* Get Task Priority */
+        printf("Toggle Green LED\n\rGreenLedTaskPriority = %ld\n\r", GreenLedController_Priority);
         HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+
+        SuspendMonitor++;
+
+        if(SuspendMonitor == 5)
+        {
+            vTaskSuspend(RandomTextGenerator_handle); /* Suspend Random Text Generator Task */
+        }
+        else if (SuspendMonitor == 10)
+        {
+            vTaskResume(RandomTextGenerator_handle); /* Resume Random Text Generator Task */
+            SuspendMonitor = 0;
+        }
         vTaskDelay( 1000 / portTICK_PERIOD_MS );
     }
 }
@@ -94,6 +113,7 @@ void vRandomTextGeneratorTask( void * pvParameters )
     while(1)
     {
         /* Generate a random text each 500ms */
+        RandomTextGeneratorProfier++;
         printf("Random Text \n\r");
         vTaskPrioritySet( RandomTextGenerator_handle, tskIDLE_PRIORITY + 3 ); /* Increase Task Priority */
         vTaskDelay( 1000 / portTICK_PERIOD_MS );
