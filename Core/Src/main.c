@@ -79,6 +79,13 @@ int main(void)
               NULL,
               tskIDLE_PRIORITY,
               &InitTask_Handle); 
+
+  xTaskCreate(vPeriodicTask,
+              "Periodic Task",
+              configMINIMAL_STACK_SIZE,
+              NULL,
+              tskIDLE_PRIORITY + 1,
+              NULL);
   
   
   /* Start scheduler */
@@ -104,6 +111,22 @@ void vInitTask( void * pvParameters )
     while(1)
     {
         printf("ERROR\n\r");
+    }
+}
+
+void vPeriodicTask( void * pvParameters )
+{
+    /* As per most tasks, this task is implemented in an infinite loop. */
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = 2000 / portTICK_PERIOD_MS; /* 2000ms */
+    /* Initialize the xLastWakeTime variable with the current time. */
+    xLastWakeTime = xTaskGetTickCount();
+
+    while(1)
+    {
+        printf("Periodic Task\n\r");
+        /* Wait for the next cycle. */
+        vTaskDelayUntil( &xLastWakeTime, xFrequency );
     }
 }
 
