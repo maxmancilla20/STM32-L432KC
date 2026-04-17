@@ -25,12 +25,14 @@
 UART_HandleTypeDef huart2;
 uint32_t GreenTaskProfier = 0;
 uint32_t RandomTextGeneratorProfier = 0;
+uint32_t InitTaskProfiler = 0;
 uint32_t GreenLedController_Priority = 0;
 uint32_t SuspendMonitor = 0;
 
 /* Task Handles, allow task modification in runtime */
 TaskHandle_t GreenLedController_handle = NULL;
 TaskHandle_t RandomTextGenerator_handle = NULL;
+TaskHandle_t InitTask_Handle = NULL;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,16 +63,24 @@ int main(void)
               "Green Led Controller", 
               configMINIMAL_STACK_SIZE, 
               NULL,                           /* Arguments */
-              tskIDLE_PRIORITY + 2,
+              tskIDLE_PRIORITY + 1,
               &GreenLedController_handle);  /* Task Handle */
   
-    xTaskCreate(vRandomTextGeneratorTask, 
+  xTaskCreate(vRandomTextGeneratorTask, 
               "Random Test Generator", 
               configMINIMAL_STACK_SIZE, 
               NULL, /* Arguments */
               tskIDLE_PRIORITY + 1,
               &RandomTextGenerator_handle); /* Task Handle */
 
+  xTaskCreate(vInitTask,
+              "Init System",
+              configMINIMAL_STACK_SIZE,
+              NULL,
+              tskIDLE_PRIORITY,
+              &InitTask_Handle); 
+  
+  
   /* Start scheduler */
   vTaskStartScheduler();
   /* We should never get here as control is now taken by the scheduler */
@@ -78,6 +88,23 @@ int main(void)
   {
     printf("ERROR\n\r");
   }
+}
+
+void vInitTask( void * pvParameters )
+{
+    /* As per most tasks, this task is implemented in an infinite loop. */
+    /* Initialize system components */
+      InitTaskProfiler++;
+      printf("System Initialization\n\r");
+      vTaskPrioritySet( InitTask_Handle, tskIDLE_PRIORITY + 2 ); /* Increase Task Priority */
+      vTaskDelay( 1000 / portTICK_PERIOD_MS );
+
+      vTaskDelete(InitTask_Handle); /* Delete Init Task */
+
+    while(1)
+    {
+        printf("ERROR\n\r");
+    }
 }
 
 void vGreenLedControllerTask( void * pvParameters )
