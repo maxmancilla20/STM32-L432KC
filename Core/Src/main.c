@@ -26,6 +26,7 @@ UART_HandleTypeDef huart2;
 uint32_t GreenTaskProfier = 0;
 uint32_t RandomTextGeneratorProfier = 0;
 uint32_t InitTaskProfiler = 0;
+uint32_t IdleTaskProfiler = 0;
 uint32_t GreenLedController_Priority = 0;
 uint32_t SuspendMonitor = 0;
 
@@ -169,6 +170,20 @@ void vRandomTextGeneratorTask( void * pvParameters )
         vTaskDelay( 1000 / portTICK_PERIOD_MS );
         
     }
+}
+
+void vApplicationIdleHook( void )
+{
+    /* This function will be called on each cycle of the idle task.  It is essential
+    that code added to this hook function never attempts to block in any way (for
+    example, call xQueueReceive() with a block time specified, or call
+    vTaskDelay()).  If the application makes use of the vTaskDelete() API function
+    then it is also important that calls to vPortFree() are thread safe, as it is
+    likely that the idle task will be responsible for freeing the memory allocated
+    by the kernel to any task that has been deleted. */
+
+    IdleTaskProfiler++;
+
 }
 
 /* Redirect  printf to UART 2*/
