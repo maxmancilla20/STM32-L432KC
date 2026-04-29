@@ -41,6 +41,9 @@ TaskHandle_t PeriodicTask_Handle = NULL;
 TaskHandle_t SenderTask_Handle = NULL;
 TaskHandle_t ReceiverTask_Handle = NULL;
 
+BaseType_t ret;
+
+
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -57,6 +60,8 @@ void vPeriodicTask( void * pvParameters );
 /* ================== Queues ==================  */
 void vSenderTask( void * pvParameters );
 void vReceiverTask( void * pvParameters );
+int uart2_write(int ch);
+
 QueueHandle_t yearQueue;
 
 int main(void)
@@ -109,23 +114,20 @@ int main(void)
               tskIDLE_PRIORITY + 1,
               &PeriodicTask_Handle);
 
-              /* Queue tasks */
-  xTaskCreate(vSenderTask,
-              "Sender Task",
-              configMINIMAL_STACK_SIZE,
-              NULL,
-              tskIDLE_PRIORITY + 1,   
-              &SenderTask_Handle );
+  /* Queue tasks */
+  ret = xTaskCreate(vSenderTask, "Sender Task", configMINIMAL_STACK_SIZE,
+                    NULL, tskIDLE_PRIORITY + 3, &SenderTask_Handle);
+  printf("SenderTask create: %s\n\r", ret == pdPASS ? "OK" : "FAILED - OUT OF HEAP");
   
-  xTaskCreate(vReceiverTask,
-              "Receiver Task",
-              configMINIMAL_STACK_SIZE,
-              NULL,
-              tskIDLE_PRIORITY + 1,
-              &ReceiverTask_Handle );
+  ret = xTaskCreate(vReceiverTask, "Receiver Task", configMINIMAL_STACK_SIZE,
+                    NULL, tskIDLE_PRIORITY + 3, &ReceiverTask_Handle);
+  printf("ReceiverTask create: %s\n\r", ret == pdPASS ? "OK" : "FAILED - OUT OF HEAP");
+
 
   printf("All tasks created, starting scheduler...\n\r");
   
+  printf("SenderTask_Handle = %p\n\r", SenderTask_Handle);
+  printf("ReceiverTask_Handle = %p\n\r", ReceiverTask_Handle);
   /* Start scheduler */
   vTaskStartScheduler();
   
@@ -138,6 +140,7 @@ int main(void)
 
 void vSenderTask( void * pvParameters )
 {
+    printf(">>> SenderTask STARTED\n\r");
     uint32_t year = 2024;
     BaseType_t qStatus;
 
@@ -159,6 +162,7 @@ void vSenderTask( void * pvParameters )
 
 void vReceiverTask( void * pvParameters )
 {
+    printf(">>> ReceiverTask STARTED\n\r"); 
     uint32_t receivedYear;
     BaseType_t qStatus;
 
@@ -186,15 +190,15 @@ void vInitTask( void * pvParameters )
       InitTaskProfiler++;
       printf("System Initialization\n\r");
       vTaskPrioritySet( InitTask_Handle, tskIDLE_PRIORITY + 2 ); /* Increase Task Priority */
-      vTaskDelay( pdMS_TO_TICKS( 1000 ) );
-
       
       vTaskDelete( GreenLedController_handle ); /* Delete Green Led Controller Task */
       
-      vTaskDelete(InitTask_Handle); /* Delete Init Task */
+      vTaskDelete(NULL); /* Delete Init Task */
+
     while(1)
     {
         printf("ERROR\n\r");
+        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
     }
 }
 
@@ -270,10 +274,19 @@ void vApplicationIdleHook( void )
 
 }
 
+
+int uart2_write(int ch)
+{
+    while(!(USART2->ISR & UART_FLAG_TXE)){}
+    USART2->TDR = (ch & 0xFF);
+    return ch;
+}
+
 /* Redirect  printf to UART 2*/
 int __io_putchar(int ch)
 {
-	HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+	//HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+  uart2_write(ch);
 	return ch;
 }
 
