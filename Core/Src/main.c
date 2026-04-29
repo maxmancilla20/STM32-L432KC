@@ -25,6 +25,9 @@
 UART_HandleTypeDef huart2;
 uint32_t GreenTaskProfier = 0;
 uint32_t RandomTextGeneratorProfier = 0;
+uint32_t PeriodicTaskProfiler = 0;
+uint32_t SenderTaskProfiler = 0;
+uint32_t ReceiverTaskProfiler = 0;
 uint32_t InitTaskProfiler = 0;
 uint32_t IdleTaskProfiler = 0;
 uint32_t GreenLedController_Priority = 0;
@@ -34,6 +37,9 @@ uint32_t SuspendMonitor = 0;
 TaskHandle_t GreenLedController_handle = NULL;
 TaskHandle_t RandomTextGenerator_handle = NULL;
 TaskHandle_t InitTask_Handle = NULL;
+TaskHandle_t PeriodicTask_Handle = NULL;
+TaskHandle_t SenderTask_Handle = NULL;
+TaskHandle_t ReceiverTask_Handle = NULL;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -46,7 +52,12 @@ int __io_putchar(int ch);
 /* Tasks */
 void vGreenLedControllerTask( void * pvParameters );
 void vRandomTextGeneratorTask( void * pvParameters );
-
+void vInitTask( void * pvParameters );
+void vPeriodicTask( void * pvParameters );
+/* ================== Queues ==================  */
+void vSenderTask( void * pvParameters );
+void vReceiverTask( void * pvParameters );
+QueueHandle_t yearQueue;
 
 int main(void)
 {
@@ -58,6 +69,16 @@ int main(void)
 
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+
+  /* Create queue BEFORE all tasks */
+  yearQueue = xQueueCreate( 10, sizeof( uint32_t ) );
+  
+  if( yearQueue == NULL )
+  {
+    printf("ERROR: Queue creation failed!\n\r");
+    while(1);
+  }
+  printf("Queue created successfully\n\r");
 
   /* Tasks Creations */
   xTaskCreate(vGreenLedControllerTask, 
@@ -78,7 +99,7 @@ int main(void)
               "Init System",
               configMINIMAL_STACK_SIZE,
               NULL,
-              tskIDLE_PRIORITY,
+              tskIDLE_PRIORITY + 1,
               &InitTask_Handle); 
 
   xTaskCreate(vPeriodicTask,
@@ -86,16 +107,76 @@ int main(void)
               configMINIMAL_STACK_SIZE,
               NULL,
               tskIDLE_PRIORITY + 1,
-              NULL);
+              &PeriodicTask_Handle);
+
+              /* Queue tasks */
+  xTaskCreate(vSenderTask,
+              "Sender Task",
+              configMINIMAL_STACK_SIZE,
+              NULL,
+              tskIDLE_PRIORITY + 1,   
+              &SenderTask_Handle );
   
+  xTaskCreate(vReceiverTask,
+              "Receiver Task",
+              configMINIMAL_STACK_SIZE,
+              NULL,
+              tskIDLE_PRIORITY + 1,
+              &ReceiverTask_Handle );
+
+  printf("All tasks created, starting scheduler...\n\r");
   
   /* Start scheduler */
   vTaskStartScheduler();
+  
   /* We should never get here as control is now taken by the scheduler */
   while (1)
   {
     printf("ERROR\n\r");
   }
+}
+
+void vSenderTask( void * pvParameters )
+{
+    uint32_t year = 2024;
+    BaseType_t qStatus;
+
+    while(1)
+    {    
+        SenderTaskProfiler++;
+        printf("Sending Year: %lu\n\r", year);
+        qStatus = xQueueSend( yearQueue, &year, pdMS_TO_TICKS( 1000 ) );
+        
+        if( qStatus != pdPASS )
+        {
+            printf("Failed to send year\n\r");
+        }
+
+        year++;
+        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+    }
+}
+
+void vReceiverTask( void * pvParameters )
+{
+    uint32_t receivedYear;
+    BaseType_t qStatus;
+
+    while(1)
+    {   
+        ReceiverTaskProfiler++;
+        qStatus = xQueueReceive( yearQueue, &receivedYear, pdMS_TO_TICKS( 1000 ) );
+
+        if( qStatus == pdPASS )
+        {
+            printf("Received Year: %lu\n\r", receivedYear);
+        }
+        else
+        {
+            printf("Failed to receive year\n\r");
+        }
+        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+    }
 }
 
 void vInitTask( void * pvParameters )
@@ -105,10 +186,12 @@ void vInitTask( void * pvParameters )
       InitTaskProfiler++;
       printf("System Initialization\n\r");
       vTaskPrioritySet( InitTask_Handle, tskIDLE_PRIORITY + 2 ); /* Increase Task Priority */
-      vTaskDelay( 1000 / portTICK_PERIOD_MS );
+      vTaskDelay( pdMS_TO_TICKS( 1000 ) );
 
+      
+      vTaskDelete( GreenLedController_handle ); /* Delete Green Led Controller Task */
+      
       vTaskDelete(InitTask_Handle); /* Delete Init Task */
-
     while(1)
     {
         printf("ERROR\n\r");
@@ -119,12 +202,14 @@ void vPeriodicTask( void * pvParameters )
 {
     /* As per most tasks, this task is implemented in an infinite loop. */
     TickType_t xLastWakeTime;
-    const TickType_t xFrequency = 2000 / portTICK_PERIOD_MS; /* 2000ms */
+    const TickType_t xFrequency = pdMS_TO_TICKS( 2000 ); /* 2000ms */
     /* Initialize the xLastWakeTime variable with the current time. */
     xLastWakeTime = xTaskGetTickCount();
 
     while(1)
-    {
+    { 
+        PeriodicTaskProfiler++;
+
         printf("Periodic Task\n\r");
         /* Wait for the next cycle. */
         vTaskDelayUntil( &xLastWakeTime, xFrequency );
@@ -133,7 +218,6 @@ void vPeriodicTask( void * pvParameters )
 
 void vGreenLedControllerTask( void * pvParameters )
 {
-    int i = 0;
     /* As per most tasks, this task is implemented in an infinite loop. */
     while(1)
     {
@@ -154,7 +238,7 @@ void vGreenLedControllerTask( void * pvParameters )
             vTaskResume(RandomTextGenerator_handle); /* Resume Random Text Generator Task */
             SuspendMonitor = 0;
         }
-        vTaskDelay( 1000 / portTICK_PERIOD_MS );
+        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
     }
 }
 
@@ -167,7 +251,7 @@ void vRandomTextGeneratorTask( void * pvParameters )
         RandomTextGeneratorProfier++;
         printf("Random Text \n\r");
         vTaskPrioritySet( RandomTextGenerator_handle, tskIDLE_PRIORITY + 3 ); /* Increase Task Priority */
-        vTaskDelay( 1000 / portTICK_PERIOD_MS );
+        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
         
     }
 }
