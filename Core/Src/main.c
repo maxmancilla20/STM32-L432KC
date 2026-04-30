@@ -23,29 +23,37 @@
 
 
 UART_HandleTypeDef huart2;
-uint32_t GreenTaskProfier = 0;
-uint32_t RandomTextGeneratorProfier = 0;
-uint32_t PeriodicTaskProfiler = 0;
-uint32_t SenderTaskProfiler1 = 0;
-uint32_t ReceiverTaskProfiler1 = 0;
-uint32_t SenderTaskProfiler2 = 0;
+uint32_t HumidityTaskProfiler = 0;
+uint32_t PressureTaskProfiler = 0;
+uint32_t ReceiverTaskProfiler = 0;
 uint32_t InitTaskProfiler = 0;
 uint32_t IdleTaskProfiler = 0;
-uint32_t GreenLedController_Priority = 0;
-uint32_t SuspendMonitor = 0;
+
 
 /* Task Handles, allow task modification in runtime */
-TaskHandle_t GreenLedController_handle = NULL;
-TaskHandle_t RandomTextGenerator_handle = NULL;
 TaskHandle_t InitTask_Handle = NULL;
-TaskHandle_t PeriodicTask_Handle = NULL;
-TaskHandle_t SenderTask_Handle1 = NULL;
-TaskHandle_t ReceiverTask_Handle1 = NULL;
-TaskHandle_t SenderTask_Handle2 = NULL;
+TaskHandle_t HumidityTask_Handle = NULL;
+TaskHandle_t PressureTask_Handle = NULL;
+TaskHandle_t ReceiverTask_Handle = NULL;
 
-BaseType_t ret;
+/* Complex Queue Data*/
+typedef enum
+{
+  humidy_sensor,
+  pressure_sensor
+} DataSource_t;
 
+typedef struct
+{
+  uint16_t value;
+  DataSource_t sDataSource;
+} Data_t;
 
+static const Data_t xStructsToSend [ 2 ] =
+{
+  { 50, humidy_sensor },
+  { 1013, pressure_sensor }
+};
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -55,18 +63,16 @@ static void MX_USART2_UART_Init(void);
 /* Redirect  printf to UART 2*/
 int __io_putchar(int ch);
 /* Tasks */
-void vGreenLedControllerTask( void * pvParameters );
-void vRandomTextGeneratorTask( void * pvParameters );
 void vInitTask( void * pvParameters );
-void vPeriodicTask( void * pvParameters );
 /* ================== Queues ==================  */
-void vSenderTask1( void * pvParameters );
-void vSenderTask2( void * pvParameters );
-void vReceiverTask1( void * pvParameters );
+void vHumidityTask( void * pvParameters );
+void vPressureTask( void * pvParameters );
+void vReceiverTask( void * pvParameters );
 
 int uart2_write(int ch);
 
 QueueHandle_t yearQueue;
+QueueHandle_t dataQueue;
 
 int main(void)
 {
@@ -80,30 +86,24 @@ int main(void)
   MX_USART2_UART_Init();
 
   /* Create queue BEFORE all tasks */
-  yearQueue = xQueueCreate( 10, sizeof( uint32_t ) );
-  
+  yearQueue = xQueueCreate( 5, sizeof( uint32_t ) );
+  dataQueue = xQueueCreate( 10, sizeof( Data_t ) );
+
   if( yearQueue == NULL )
   {
     printf("ERROR: Queue creation failed!\n\r");
     while(1);
   }
+
+  if( dataQueue == NULL )
+  {
+    printf("ERROR: Data queue creation failed!\n\r");
+    while(1);
+  }
   printf("Queue created successfully\n\r");
 
-  /* Tasks Creations */
-  xTaskCreate(vGreenLedControllerTask, 
-              "Green Led Controller", 
-              configMINIMAL_STACK_SIZE, 
-              NULL,                           /* Arguments */
-              tskIDLE_PRIORITY + 1,
-              &GreenLedController_handle);  /* Task Handle */
-  
-  xTaskCreate(vRandomTextGeneratorTask, 
-              "Random Test Generator", 
-              configMINIMAL_STACK_SIZE, 
-              NULL, /* Arguments */
-              tskIDLE_PRIORITY + 1,
-              &RandomTextGenerator_handle); /* Task Handle */
 
+  /* Tasks Creations */
   xTaskCreate(vInitTask,
               "Init System",
               configMINIMAL_STACK_SIZE,
@@ -111,48 +111,34 @@ int main(void)
               tskIDLE_PRIORITY + 1,
               &InitTask_Handle); 
 
-  xTaskCreate(vPeriodicTask,
-              "Periodic Task",
-              configMINIMAL_STACK_SIZE,
-              NULL,
-              tskIDLE_PRIORITY + 1,
-              &PeriodicTask_Handle);
-
   /* Queue tasks */
-  ret = xTaskCreate(vSenderTask1, 
-              "Sender Task1", 
+  xTaskCreate(vHumidityTask, 
+              "vHumidityTask", 
               configMINIMAL_STACK_SIZE,
-              NULL, 
-              tskIDLE_PRIORITY + 1, 
-              &SenderTask_Handle1);
+              (void *)&(xStructsToSend[0]), 
+              tskIDLE_PRIORITY + 2, 
+              &HumidityTask_Handle);
 
-  printf("SenderTask create: %s\n\r", ret == pdPASS ? "OK" : "FAILED - OUT OF HEAP");
-
-  ret = xTaskCreate(vSenderTask2, 
-              "Sender Task2", 
+  xTaskCreate(vPressureTask, 
+              "vPressureTask", 
               configMINIMAL_STACK_SIZE,
-              NULL, 
-              tskIDLE_PRIORITY + 1, 
-              &SenderTask_Handle2);
+              (void *)&(xStructsToSend[1]), 
+              tskIDLE_PRIORITY + 2, 
+              &PressureTask_Handle);
 
-  printf("SenderTask create: %s\n\r", ret == pdPASS ? "OK" : "FAILED - OUT OF HEAP");
-
-
-  ret = xTaskCreate(vReceiverTask1, 
+  xTaskCreate(vReceiverTask, 
               "Receiver Task", 
               configMINIMAL_STACK_SIZE,
               NULL, 
-              tskIDLE_PRIORITY + 2, 
-              &ReceiverTask_Handle1);
+              tskIDLE_PRIORITY + 3,
+              &ReceiverTask_Handle);
 
-  printf("ReceiverTask create: %s\n\r", ret == pdPASS ? "OK" : "FAILED - OUT OF HEAP");
+  printf("HumidityTask_Handle = %p\n\r", HumidityTask_Handle);
+  printf("PressureTask_Handle = %p\n\r", PressureTask_Handle);
+  printf("ReceiverTask_Handle = %p\n\r", ReceiverTask_Handle);
 
-
-  printf("All tasks created, starting scheduler...\n\r");
-  
-  printf("SenderTask_Handle = %p\n\r", SenderTask_Handle1);
-  printf("ReceiverTask_Handle = %p\n\r", ReceiverTask_Handle1);
   /* Start scheduler */
+  printf("All tasks created, starting scheduler...\n\r");
   vTaskStartScheduler();
   
   /* We should never get here as control is now taken by the scheduler */
@@ -162,70 +148,72 @@ int main(void)
   }
 }
 
-void vSenderTask1( void * pvParameters )
+void vHumidityTask( void * pvParameters )
 {
-    printf(">>> SenderTask STARTED\n\r");
-    uint32_t year = 2020;
+    printf(">>> Humidity Task STARTED\n\r");
     BaseType_t qStatus;
 
     while(1)
     {    
-        SenderTaskProfiler1++;
-        printf("Sending Year: %lu\n\r", year);
-        qStatus = xQueueSend( yearQueue, &year, pdMS_TO_TICKS( 1000 ) );
+        HumidityTaskProfiler++;
+        //printf(" Humidity: %ld\n\r", *(uint16_t*)pvParameters);
+        qStatus = xQueueSend( dataQueue, pvParameters, pdMS_TO_TICKS( 1000 ) );
         
         if( qStatus != pdPASS )
         {
-            printf("Failed to send year\n\r");
+            printf("Failed to send humidity data\n\r");
         }
-
-        year++;
+        
         vTaskDelay( pdMS_TO_TICKS( 1000 ) );
     }
 }
 
-void vSenderTask2( void * pvParameters )
+void vPressureTask( void * pvParameters )
 {
-    printf(">>> SenderTask STARTED\n\r");
-    uint32_t year = 5050;
+    printf(">>> Pressure Task STARTED\n\r");
     BaseType_t qStatus;
 
     while(1)
     {    
-        SenderTaskProfiler2++;
-        printf("Sending Year: %lu\n\r", year);
-        qStatus = xQueueSend( yearQueue, &year, pdMS_TO_TICKS( 1000 ) );
+        PressureTaskProfiler++;
+        //printf("Pressure: %ld\n\r", *(uint16_t*)pvParameters);
+        qStatus = xQueueSend( dataQueue, pvParameters, pdMS_TO_TICKS( 1000 ) );
         
         if( qStatus != pdPASS )
         {
-            printf("Failed to send year\n\r");
+            printf("Failed to send pressure data\n\r");
         }
 
-        year++;
         vTaskDelay( pdMS_TO_TICKS( 1000 ) );
     }
 }
 
-void vReceiverTask1( void * pvParameters )
+void vReceiverTask( void * pvParameters )
 {
     printf(">>> ReceiverTask STARTED\n\r"); 
-    uint32_t receivedYear;
     BaseType_t qStatus;
-
+    Data_t receivedData;
     while(1)
     {   
-        ReceiverTaskProfiler1++;
-        qStatus = xQueueReceive( yearQueue, &receivedYear, pdMS_TO_TICKS( 1000 ) );
+        ReceiverTaskProfiler++;
+        qStatus = xQueueReceive( dataQueue, &receivedData, pdMS_TO_TICKS( 1000 ) );
 
-        if( qStatus == pdPASS )
+        if( qStatus != pdPASS )
         {
-            printf("Received Year: %lu\n\r", receivedYear);
+            printf("Failed to receive data\n\r");
         }
         else
         {
-            printf("Failed to receive year\n\r");
+            if(receivedData.sDataSource == humidy_sensor)
+            {
+                printf("Received Humidity: %d\n\r", receivedData.value);
+            }
+            else if(receivedData.sDataSource == pressure_sensor)
+            {
+                printf("Received Pressure: %d\n\r", receivedData.value);
+            }
         }
-        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+        vTaskDelay( pdMS_TO_TICKS( 500 ) );
     }
 }
 
@@ -237,9 +225,6 @@ void vInitTask( void * pvParameters )
       printf("System Initialization\n\r");
       vTaskPrioritySet( InitTask_Handle, tskIDLE_PRIORITY + 2 ); /* Increase Task Priority */
       
-      vTaskDelete( GreenLedController_handle ); /* Delete Green Led Controller Task */
-      vTaskDelete( PeriodicTask_Handle ); /* Delete Green Led Controller Task */
-      vTaskDelete( RandomTextGenerator_handle );
       vTaskDelete(NULL); /* Delete Init Task */
 
     while(1)
@@ -249,63 +234,6 @@ void vInitTask( void * pvParameters )
     }
 }
 
-void vPeriodicTask( void * pvParameters )
-{
-    /* As per most tasks, this task is implemented in an infinite loop. */
-    TickType_t xLastWakeTime;
-    const TickType_t xFrequency = pdMS_TO_TICKS( 2000 ); /* 2000ms */
-    /* Initialize the xLastWakeTime variable with the current time. */
-    xLastWakeTime = xTaskGetTickCount();
-
-    while(1)
-    { 
-        PeriodicTaskProfiler++;
-
-        printf("Periodic Task\n\r");
-        /* Wait for the next cycle. */
-        vTaskDelayUntil( &xLastWakeTime, xFrequency );
-    }
-}
-
-void vGreenLedControllerTask( void * pvParameters )
-{
-    /* As per most tasks, this task is implemented in an infinite loop. */
-    while(1)
-    {
-        /* Toggle the LED each 1000ms */
-        GreenTaskProfier++;
-        GreenLedController_Priority = uxTaskPriorityGet( GreenLedController_handle ); /* Get Task Priority */
-        printf("Toggle Green LED\n\rGreenLedTaskPriority = %ld\n\r", GreenLedController_Priority);
-        HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-
-        SuspendMonitor++;
-
-        if(SuspendMonitor == 5)
-        {
-            vTaskSuspend(RandomTextGenerator_handle); /* Suspend Random Text Generator Task */
-        }
-        else if (SuspendMonitor == 10)
-        {
-            vTaskResume(RandomTextGenerator_handle); /* Resume Random Text Generator Task */
-            SuspendMonitor = 0;
-        }
-        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
-    }
-}
-
-void vRandomTextGeneratorTask( void * pvParameters )
-{
-    /* As per most tasks, this task is implemented in an infinite loop. */
-    while(1)
-    {
-        /* Generate a random text each 500ms */
-        RandomTextGeneratorProfier++;
-        printf("Random Text \n\r");
-        vTaskPrioritySet( RandomTextGenerator_handle, tskIDLE_PRIORITY + 3 ); /* Increase Task Priority */
-        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
-        
-    }
-}
 
 void vApplicationIdleHook( void )
 {
