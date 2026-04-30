@@ -26,8 +26,9 @@ UART_HandleTypeDef huart2;
 uint32_t GreenTaskProfier = 0;
 uint32_t RandomTextGeneratorProfier = 0;
 uint32_t PeriodicTaskProfiler = 0;
-uint32_t SenderTaskProfiler = 0;
-uint32_t ReceiverTaskProfiler = 0;
+uint32_t SenderTaskProfiler1 = 0;
+uint32_t ReceiverTaskProfiler1 = 0;
+uint32_t SenderTaskProfiler2 = 0;
 uint32_t InitTaskProfiler = 0;
 uint32_t IdleTaskProfiler = 0;
 uint32_t GreenLedController_Priority = 0;
@@ -38,8 +39,9 @@ TaskHandle_t GreenLedController_handle = NULL;
 TaskHandle_t RandomTextGenerator_handle = NULL;
 TaskHandle_t InitTask_Handle = NULL;
 TaskHandle_t PeriodicTask_Handle = NULL;
-TaskHandle_t SenderTask_Handle = NULL;
-TaskHandle_t ReceiverTask_Handle = NULL;
+TaskHandle_t SenderTask_Handle1 = NULL;
+TaskHandle_t ReceiverTask_Handle1 = NULL;
+TaskHandle_t SenderTask_Handle2 = NULL;
 
 BaseType_t ret;
 
@@ -58,8 +60,10 @@ void vRandomTextGeneratorTask( void * pvParameters );
 void vInitTask( void * pvParameters );
 void vPeriodicTask( void * pvParameters );
 /* ================== Queues ==================  */
-void vSenderTask( void * pvParameters );
-void vReceiverTask( void * pvParameters );
+void vSenderTask1( void * pvParameters );
+void vSenderTask2( void * pvParameters );
+void vReceiverTask1( void * pvParameters );
+
 int uart2_write(int ch);
 
 QueueHandle_t yearQueue;
@@ -115,19 +119,39 @@ int main(void)
               &PeriodicTask_Handle);
 
   /* Queue tasks */
-  ret = xTaskCreate(vSenderTask, "Sender Task", configMINIMAL_STACK_SIZE,
-                    NULL, tskIDLE_PRIORITY + 3, &SenderTask_Handle);
+  ret = xTaskCreate(vSenderTask1, 
+              "Sender Task1", 
+              configMINIMAL_STACK_SIZE,
+              NULL, 
+              tskIDLE_PRIORITY + 1, 
+              &SenderTask_Handle1);
+
   printf("SenderTask create: %s\n\r", ret == pdPASS ? "OK" : "FAILED - OUT OF HEAP");
-  
-  ret = xTaskCreate(vReceiverTask, "Receiver Task", configMINIMAL_STACK_SIZE,
-                    NULL, tskIDLE_PRIORITY + 3, &ReceiverTask_Handle);
+
+  ret = xTaskCreate(vSenderTask2, 
+              "Sender Task2", 
+              configMINIMAL_STACK_SIZE,
+              NULL, 
+              tskIDLE_PRIORITY + 1, 
+              &SenderTask_Handle2);
+
+  printf("SenderTask create: %s\n\r", ret == pdPASS ? "OK" : "FAILED - OUT OF HEAP");
+
+
+  ret = xTaskCreate(vReceiverTask1, 
+              "Receiver Task", 
+              configMINIMAL_STACK_SIZE,
+              NULL, 
+              tskIDLE_PRIORITY + 2, 
+              &ReceiverTask_Handle1);
+
   printf("ReceiverTask create: %s\n\r", ret == pdPASS ? "OK" : "FAILED - OUT OF HEAP");
 
 
   printf("All tasks created, starting scheduler...\n\r");
   
-  printf("SenderTask_Handle = %p\n\r", SenderTask_Handle);
-  printf("ReceiverTask_Handle = %p\n\r", ReceiverTask_Handle);
+  printf("SenderTask_Handle = %p\n\r", SenderTask_Handle1);
+  printf("ReceiverTask_Handle = %p\n\r", ReceiverTask_Handle1);
   /* Start scheduler */
   vTaskStartScheduler();
   
@@ -138,15 +162,15 @@ int main(void)
   }
 }
 
-void vSenderTask( void * pvParameters )
+void vSenderTask1( void * pvParameters )
 {
     printf(">>> SenderTask STARTED\n\r");
-    uint32_t year = 2024;
+    uint32_t year = 2020;
     BaseType_t qStatus;
 
     while(1)
     {    
-        SenderTaskProfiler++;
+        SenderTaskProfiler1++;
         printf("Sending Year: %lu\n\r", year);
         qStatus = xQueueSend( yearQueue, &year, pdMS_TO_TICKS( 1000 ) );
         
@@ -160,7 +184,29 @@ void vSenderTask( void * pvParameters )
     }
 }
 
-void vReceiverTask( void * pvParameters )
+void vSenderTask2( void * pvParameters )
+{
+    printf(">>> SenderTask STARTED\n\r");
+    uint32_t year = 5050;
+    BaseType_t qStatus;
+
+    while(1)
+    {    
+        SenderTaskProfiler2++;
+        printf("Sending Year: %lu\n\r", year);
+        qStatus = xQueueSend( yearQueue, &year, pdMS_TO_TICKS( 1000 ) );
+        
+        if( qStatus != pdPASS )
+        {
+            printf("Failed to send year\n\r");
+        }
+
+        year++;
+        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+    }
+}
+
+void vReceiverTask1( void * pvParameters )
 {
     printf(">>> ReceiverTask STARTED\n\r"); 
     uint32_t receivedYear;
@@ -168,7 +214,7 @@ void vReceiverTask( void * pvParameters )
 
     while(1)
     {   
-        ReceiverTaskProfiler++;
+        ReceiverTaskProfiler1++;
         qStatus = xQueueReceive( yearQueue, &receivedYear, pdMS_TO_TICKS( 1000 ) );
 
         if( qStatus == pdPASS )
@@ -192,7 +238,8 @@ void vInitTask( void * pvParameters )
       vTaskPrioritySet( InitTask_Handle, tskIDLE_PRIORITY + 2 ); /* Increase Task Priority */
       
       vTaskDelete( GreenLedController_handle ); /* Delete Green Led Controller Task */
-      
+      vTaskDelete( PeriodicTask_Handle ); /* Delete Green Led Controller Task */
+      vTaskDelete( RandomTextGenerator_handle );
       vTaskDelete(NULL); /* Delete Init Task */
 
     while(1)
