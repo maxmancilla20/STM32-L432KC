@@ -73,6 +73,9 @@ int uart2_write(int ch);
 
 QueueHandle_t yearQueue;
 QueueHandle_t dataQueue;
+QueueHandle_t xQueue1 = NULL, xQueue2 = NULL;
+
+QueueSetHandle_t xQueueSet = NULL;
 
 int main(void)
 {
@@ -85,9 +88,18 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
 
-  /* Create queue BEFORE all tasks */
+  /* Create queues */
   yearQueue = xQueueCreate( 5, sizeof( uint32_t ) );
   dataQueue = xQueueCreate( 10, sizeof( Data_t ) );
+
+  /* Create Queues for QueueSet*/
+  xQueue1 = xQueueCreate( 5, sizeof( char * ) );
+  xQueue2 = xQueueCreate( 5, sizeof( char * ) );
+  /* Create QueueSet */
+  xQueueSet = xQueueCreateSet( 1 * 2 );
+
+  xQueueAddToSet( xQueue1, xQueueSet );
+  xQueueAddToSet( xQueue2, xQueueSet );
 
   if( yearQueue == NULL )
   {
@@ -116,21 +128,21 @@ int main(void)
               "vHumidityTask", 
               configMINIMAL_STACK_SIZE,
               (void *)&(xStructsToSend[0]), 
-              tskIDLE_PRIORITY + 2, 
+              tskIDLE_PRIORITY + 1, 
               &HumidityTask_Handle);
 
   xTaskCreate(vPressureTask, 
               "vPressureTask", 
               configMINIMAL_STACK_SIZE,
               (void *)&(xStructsToSend[1]), 
-              tskIDLE_PRIORITY + 2, 
+              tskIDLE_PRIORITY + 1, 
               &PressureTask_Handle);
 
   xTaskCreate(vReceiverTask, 
               "Receiver Task", 
               configMINIMAL_STACK_SIZE,
               NULL, 
-              tskIDLE_PRIORITY + 3,
+              tskIDLE_PRIORITY + 2,
               &ReceiverTask_Handle);
 
   printf("HumidityTask_Handle = %p\n\r", HumidityTask_Handle);
@@ -152,11 +164,13 @@ void vHumidityTask( void * pvParameters )
 {
     printf(">>> Humidity Task STARTED\n\r");
     BaseType_t qStatus;
+    char * msg = "Humidity Task Message\r\n";
 
     while(1)
     {    
         HumidityTaskProfiler++;
         //printf(" Humidity: %ld\n\r", *(uint16_t*)pvParameters);
+        xQueueSend( xQueue1, &msg, 0 );
         qStatus = xQueueSend( dataQueue, pvParameters, pdMS_TO_TICKS( 1000 ) );
         
         if( qStatus != pdPASS )
@@ -172,11 +186,13 @@ void vPressureTask( void * pvParameters )
 {
     printf(">>> Pressure Task STARTED\n\r");
     BaseType_t qStatus;
+    char * msg = "Pressure Task Message\r\n";
 
     while(1)
     {    
         PressureTaskProfiler++;
         //printf("Pressure: %ld\n\r", *(uint16_t*)pvParameters);
+        xQueueSend( xQueue2, &msg, 0 );
         qStatus = xQueueSend( dataQueue, pvParameters, pdMS_TO_TICKS( 1000 ) );
         
         if( qStatus != pdPASS )
@@ -193,9 +209,19 @@ void vReceiverTask( void * pvParameters )
     printf(">>> ReceiverTask STARTED\n\r"); 
     BaseType_t qStatus;
     Data_t receivedData;
+
+    QueueHandle_t xQueueThatContainsData;
+    char *pcReceiveString;
+
     while(1)
     {   
         ReceiverTaskProfiler++;
+
+        /* Tells which queue has new data available */
+        xQueueThatContainsData = (QueueHandle_t) xQueueSelectFromSet( xQueueSet, pdMS_TO_TICKS( 1000 ) );
+        xQueueReceive( xQueueThatContainsData, &pcReceiveString, 0 );
+        printf("Received message: %s\n\r", pcReceiveString);
+
         qStatus = xQueueReceive( dataQueue, &receivedData, pdMS_TO_TICKS( 1000 ) );
 
         if( qStatus != pdPASS )
