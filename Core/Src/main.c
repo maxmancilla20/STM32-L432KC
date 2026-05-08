@@ -28,7 +28,8 @@ uint32_t PressureTaskProfiler = 0;
 uint32_t ReceiverTaskProfiler = 0;
 uint32_t InitTaskProfiler = 0;
 uint32_t IdleTaskProfiler = 0;
-
+uint32_t SemaphoreHumidityProfiler = 0;
+uint32_t SemaphorePressureProfiler = 0;
 
 /* Task Handles, allow task modification in runtime */
 TaskHandle_t InitTask_Handle = NULL;
@@ -77,6 +78,9 @@ QueueHandle_t xQueue1 = NULL, xQueue2 = NULL;
 
 QueueSetHandle_t xQueueSet = NULL;
 
+/* Shemaphore */
+SemaphoreHandle_t xBinarySemaphore; 
+
 int main(void)
 {
 
@@ -100,6 +104,8 @@ int main(void)
 
   xQueueAddToSet( xQueue1, xQueueSet );
   xQueueAddToSet( xQueue2, xQueueSet );
+  /* Create Binary Semaphore */
+  xBinarySemaphore = xSemaphoreCreateBinary();
 
   if( yearQueue == NULL )
   {
@@ -165,6 +171,8 @@ void vHumidityTask( void * pvParameters )
     printf(">>> Humidity Task STARTED\n\r");
     BaseType_t qStatus;
     char * msg = "Humidity Task Message\r\n";
+    /* First give the semaphore to avoid deadlock */
+    xSemaphoreGive( xBinarySemaphore );
 
     while(1)
     {    
@@ -172,12 +180,19 @@ void vHumidityTask( void * pvParameters )
         //printf(" Humidity: %ld\n\r", *(uint16_t*)pvParameters);
         xQueueSend( xQueue1, &msg, 0 );
         qStatus = xQueueSend( dataQueue, pvParameters, pdMS_TO_TICKS( 1000 ) );
-        
+
+
         if( qStatus != pdPASS )
         {
             printf("Failed to send humidity data\n\r");
         }
         
+        xSemaphoreTake( xBinarySemaphore, portMAX_DELAY ); /* Wait until Receiver Task processes the data and gives the semaphore back */
+        SemaphoreHumidityProfiler++;
+        printf("Humidity Task took the semaphore\n\r");
+          /* Give the semaphore back to the Receiver Task */
+        xSemaphoreGive( xBinarySemaphore );
+
         vTaskDelay( pdMS_TO_TICKS( 1000 ) );
     }
 }
@@ -199,6 +214,12 @@ void vPressureTask( void * pvParameters )
         {
             printf("Failed to send pressure data\n\r");
         }
+
+        xSemaphoreTake( xBinarySemaphore, portMAX_DELAY ); /* Wait until Receiver Task processes the data and gives the semaphore back */
+        SemaphorePressureProfiler++;
+        printf("Pressure Task took the semaphore\n\r");
+        /* Give the semaphore back to the Receiver Task */  
+        xSemaphoreGive( xBinarySemaphore );
 
         vTaskDelay( pdMS_TO_TICKS( 1000 ) );
     }
