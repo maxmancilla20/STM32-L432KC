@@ -50,6 +50,27 @@ extern Mcu_ConfigType McuDriverConfiguration;
  uint32_t adc_value = 0;
  uint32_t timestamp = 0;
 
+ /* CAN GLOBAL VARIABLES */
+ uint8_t rx_data[10];
+ uint8_t tx_data[8];
+
+ uint32_t tx_mailbox[3];
+
+ can_rx_header_typedef rx_header;
+ can_tx_header_typedef tx_header;
+ uint8_t count = 0;
+
+ void CAN1_RX0_IRQHandler(void)
+ {
+    if((CAN1->RF0R & CAN_RF0R_FMP0) != 0)  /* Check if there is a message pending in FIFO 0 */
+    {
+
+        can_get_rx_message(CAN_RX_FIFO0, &rx_header, rx_data);
+        count++;
+
+    }
+ }
+
 int main(void)
 {
     // Initialization code here
@@ -58,10 +79,41 @@ int main(void)
     Dio_Init(); // Initialize GPIO
     pa0_adc_init();
     start_conversion();
+
+    /* CAN INIT FUNCTIONS */
+    can_gpio_init(); // Initialize CAN GPIO pins
+    can_params_init(CAN_MODE_LOOPBACK); // Initialize CAN parameters in loopback mode
+    can_filter_config(0x244); // Configure CAN filter for standard ID 0x123
+    can_start(); // Start the CAN peripheral
+
+    tx_header.std_id = 0x244; // Set the standard ID for the CAN message
+    tx_header.ide = CAN_ID_STD; // Set the identifier type to standard
+    tx_header.rtr = 0; // Set the Remote Transmission Request to 0 (data frame)
+    tx_header.dlc = 8; // Set the Data Length Code to 8 bytes
+    tx_header.ext_id = 0; // Set the extended ID to 0 (not used for standard ID)
+    tx_header.transmit_global_time = 0; // Disable transmit global time
+
+    tx_data[0] = 0x01;
+    tx_data[1] = 0x02;
+    tx_data[2] = 0x03;
+    tx_data[3] = 0x04;
+    tx_data[4] = 0x05;
+    tx_data[5] = 0x06;
+    tx_data[6] = 0x07;
+    tx_data[7] = 0x08;
+
     //tim2_1hz_init(); // Initialize Timer 2 for 1Hz operation
 
     //tim2_output_pb3_compare_1hz(); // Initialize Timer 2 for output compare on PB3
     //tim2_input_capture(); // Jumper from PB3 to PA8
+
+    /*
+    CAN1_TX_IRQHandler 
+    CAN1_RX0_IRQHandler
+    CAN1_RX1_IRQHandler
+    CAN1_SCE_IRQHandler
+    */
+
 
     while(1)
     {
@@ -85,6 +137,11 @@ int main(void)
         //while(!(TIM1->SR & SR_CC1IF)) {} // Wait for the capture/compare interrupt flag
         /* Read captured value */
         //timestamp = TIM1->CCR1; // Read the captured value from channel 1
+
+        /* CAN SEND MESSAGE CONFIGURATION */
+        can_add_tx_message(&tx_header, &tx_data[0], tx_mailbox); // Send the CAN message
+        SystickDelay_Ms(1000); // Delay for 1 second
+
     }
     return 0;
 }

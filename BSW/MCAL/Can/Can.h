@@ -37,7 +37,7 @@ typedef struct
     uint32_t ide;     /* Identifier Extension (0 for standard, 1 for extended*/
     uint32_t rtr;     /* Remote Transmission Request (0 for data frame, 1 for remote frame) */
     uint32_t dlc;     /* Data Length Code (0-8) */
-    uint8_t trasmit_global_time; /* Transmit Global Time (0 for disabled, 1 for enabled) */
+    uint8_t transmit_global_time; /* Transmit Global Time (0 for disabled, 1 for enabled) */
 } can_tx_header_typedef;
 
 typedef struct

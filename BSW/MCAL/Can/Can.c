@@ -128,7 +128,7 @@ uint8_t can_add_tx_message(can_tx_header_typedef *pHeader, uint8_t aData[], uint
         CAN1->sTxMailBox[trasmitmailbox].TDTR = (pHeader->dlc);
 
         /* Set up the Trasmit Global Time mode */
-        if(pHeader->trasmit_global_time == 1)
+        if(pHeader->transmit_global_time == 1)
         {
             SET_BIT(CAN1->sTxMailBox[trasmitmailbox].TDTR, CAN_TDT0R_TGT);
         }
@@ -251,7 +251,7 @@ void can_filter_config(uint16_t std_id)
 
 	/*Set identifier*/
 	CAN1->sFilterRegister[13].FR1 =
-    ((uint32_t)(std_id & 0x7FFU) << CAN_TI0R_STID_Pos);
+    ((uint32_t)(std_id) << CAN_TI0R_STID_Pos);
 
 	CAN1->sFilterRegister[13].FR2 = CAN_TI0R_STID_Msk;
 
