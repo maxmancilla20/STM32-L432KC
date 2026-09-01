@@ -229,3 +229,39 @@ uint8_t can_get_rx_message(uint32_t RxFifo, can_rx_header_typedef *pHeader, uint
 
   return 0;// Message read successfully
 }
+
+void can_filter_config(uint16_t std_id)
+{
+	/*Set filter intiailization mode*/
+	CAN1->FMR |= CAN_FMR_FINIT;
+
+	///*Set the slave filter to start from 20, only available for 2 CANs*/
+	//CAN1->FMR &=~(CAN_FMR_CAN2SB_Msk);
+	//CAN1->FMR |=(20 << CAN_FMR_CAN2SB_Pos);
+
+	/*****Filter activation sequence****/
+	/*Deactive filter 13*/
+	CAN1->FA1R &=~(CAN_FA1R_FACT13);
+
+	/*Set 32-bit scale configuration*/
+	CAN1->FS1R  |= CAN_FS1R_FSC13;
+
+	/*Configure filter mode to identifier mask mode*/
+	CAN1->FM1R &=~CAN_FM1R_FBM13;
+
+	/*Set identifier*/
+	CAN1->sFilterRegister[13].FR1 =
+    ((uint32_t)(std_id & 0x7FFU) << CAN_TI0R_STID_Pos);
+
+	CAN1->sFilterRegister[13].FR2 = CAN_TI0R_STID_Msk;
+
+	/*Assign filter 13 to FIFO0*/
+	CAN1->FFA1R &=~(CAN_FFA1R_FFA13);
+
+	/*Activate filter 13*/
+	CAN1->FA1R |= (CAN_FA1R_FACT13);
+
+	/*Clear filter intialization mode*/
+	CAN1->FMR &= ~CAN_FMR_FINIT;
+
+}
