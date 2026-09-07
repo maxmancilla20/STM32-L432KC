@@ -39,6 +39,9 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #include "Gpt_Cfg.h"
 #include "Can.h"
 #include "Can_Cfg.h"
+#include "I2c.h"
+#include "I2c_Cfg.h"
+#include "BMP180.h"
 
 extern Mcu_ConfigType McuDriverConfiguration;
 /*
@@ -59,6 +62,7 @@ extern Mcu_ConfigType McuDriverConfiguration;
  can_rx_header_typedef rx_header;
  can_tx_header_typedef tx_header;
  uint8_t count = 0;
+ BMP180_DataType bmp180_data;
 
  void CAN1_RX0_IRQHandler(void)
  {
@@ -85,6 +89,8 @@ int main(void)
     can_params_init(CAN_MODE_LOOPBACK); // Initialize CAN parameters in loopback mode
     can_filter_config(0x244); // Configure CAN filter for standard ID 0x123
     can_start(); // Start the CAN peripheral
+    I2c_Init(); // Initialize I2C peripheral
+    BMP180_Init(); // Load BMP180 factory calibration coefficients
 
     tx_header.std_id = 0x244; // Set the standard ID for the CAN message
     tx_header.ide = CAN_ID_STD; // Set the identifier type to standard
@@ -139,9 +145,40 @@ int main(void)
         //timestamp = TIM1->CCR1; // Read the captured value from channel 1
 
         /* CAN SEND MESSAGE CONFIGURATION */
-        can_add_tx_message(&tx_header, &tx_data[0], tx_mailbox); // Send the CAN message
+        //can_add_tx_message(&tx_header, &tx_data[0], tx_mailbox); // Send the CAN message
         SystickDelay_Ms(1000); // Delay for 1 second
 
+
+        /* I2C Test */
+        // BMP180_ReadByte(0xD0); // Read the chip ID from the BMP180 sensor
+        BMP180_ReadMeasurement(&bmp180_data); // Read temperature and pressure data from the BMP180 sensor
+        {
+            int32_t temperatureHundredths =
+                (int32_t)(bmp180_data.TemperatureC * 100.0F);
+            int32_t temperatureWhole = temperatureHundredths / 100;
+            int32_t temperatureFraction = temperatureHundredths % 100;
+            int32_t altitudeHundredths =
+                (int32_t)(bmp180_data.AltitudeM * 100.0F);
+            int32_t altitudeWhole = altitudeHundredths / 100;
+            int32_t altitudeFraction = altitudeHundredths % 100;
+
+            if (temperatureFraction < 0)
+            {
+                temperatureFraction = -temperatureFraction;
+            }
+
+            if (altitudeFraction < 0)
+            {
+                altitudeFraction = -altitudeFraction;
+            }
+
+            printf("Temperature: %ld.%02ld C, Pressure: %lu Pa, Altitude: %ld.%02ld m\n\r",
+                   (long)temperatureWhole,
+                   (long)temperatureFraction,
+                   (unsigned long)bmp180_data.PressurePa,
+                   (long)altitudeWhole,
+                   (long)altitudeFraction);
+        }
     }
     return 0;
 }
