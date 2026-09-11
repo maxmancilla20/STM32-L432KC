@@ -42,6 +42,8 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #include "I2c.h"
 #include "I2c_Cfg.h"
 #include "BMP180.h"
+#include "Spi.h"
+#include "Spi_Cfg.h"
 
 extern Mcu_ConfigType McuDriverConfiguration;
 /*
@@ -91,6 +93,9 @@ int main(void)
     can_start(); // Start the CAN peripheral
     I2c_Init(); // Initialize I2C peripheral
     BMP180_Init(); // Load BMP180 factory calibration coefficients
+    spi1_gpio_init(); // Initialize SPI1 GPIO pins
+    spi1_config(); // Configure SPI1 peripheral
+
 
     tx_header.std_id = 0x244; // Set the standard ID for the CAN message
     tx_header.ide = CAN_ID_STD; // Set the identifier type to standard
@@ -146,7 +151,7 @@ int main(void)
 
         /* CAN SEND MESSAGE CONFIGURATION */
         //can_add_tx_message(&tx_header, &tx_data[0], tx_mailbox); // Send the CAN message
-        SystickDelay_Ms(1000); // Delay for 1 second
+        SystickDelay_Ms(1000); // Delay for 1 second    
 
 
         /* I2C Test */
@@ -179,6 +184,10 @@ int main(void)
                    (long)altitudeWhole,
                    (long)altitudeFraction);
         }
+
+
+        /* SPI TEST */
+        spi1_loopback_test();
     }
     return 0;
 }
