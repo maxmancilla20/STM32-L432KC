@@ -44,6 +44,7 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #include "BMP180.h"
 #include "Spi.h"
 #include "Spi_Cfg.h"
+#include "RC522.h"
 
 extern Mcu_ConfigType McuDriverConfiguration;
 /*
@@ -92,9 +93,10 @@ int main(void)
     can_filter_config(0x244); // Configure CAN filter for standard ID 0x123
     can_start(); // Start the CAN peripheral
     I2c_Init(); // Initialize I2C peripheral
-    BMP180_Init(); // Load BMP180 factory calibration coefficients
+    //BMP180_Init(); // Load BMP180 factory calibration coefficients
     spi1_gpio_init(); // Initialize SPI1 GPIO pins
     spi1_config(); // Configure SPI1 peripheral
+    RC522_Init(); // Initialize MFRC522 reader
 
 
     tx_header.std_id = 0x244; // Set the standard ID for the CAN message
@@ -112,6 +114,11 @@ int main(void)
     tx_data[5] = 0x06;
     tx_data[6] = 0x07;
     tx_data[7] = 0x08;
+
+    uint8_t atqa[2];
+    uint8_t uid[10];
+    uint8_t uidLen = 0;
+    uint8_t status;
 
     //tim2_1hz_init(); // Initialize Timer 2 for 1Hz operation
 
@@ -156,7 +163,7 @@ int main(void)
 
         /* I2C Test */
         // BMP180_ReadByte(0xD0); // Read the chip ID from the BMP180 sensor
-        BMP180_ReadMeasurement(&bmp180_data); // Read temperature and pressure data from the BMP180 sensor
+        //BMP180_ReadMeasurement(&bmp180_data); // Read temperature and pressure data from the BMP180 sensor
         {
             int32_t temperatureHundredths =
                 (int32_t)(bmp180_data.TemperatureC * 100.0F);
@@ -186,9 +193,35 @@ int main(void)
         }
 
 
-        /* SPI TEST */
-        spi1_loopback_test();
+        /* RFID UID detection flow */
+        status = RC522_Request(PICC_REQIDL, atqa);
+        printf("Request status = %u\r\n", status);
+
+        if (status == MI_OK)
+        {
+            status = RC522_Anticoll(uid);
+            printf("Anticoll status = %u\r\n", status);
+
+            if (status == MI_OK)
+            {
+                printf("Card detected, UID: ");
+                for (uint8_t i = 0U; i < 4U; i++)
+                {
+                    printf("%02X ", uid[i]);
+                }
+                printf("\r\n");
+
+                uidLen = 5U;
+                status = RC522_SelectTag(uid);
+                printf("Select status = %u\r\n", status);
+                if (status != 0U)
+                {
+                    RC522_Halt();
+                }
+            }
+        }
     }
+
     return 0;
 }
 
