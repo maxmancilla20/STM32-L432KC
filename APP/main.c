@@ -44,6 +44,7 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #include "BMP180.h"
 #include "Spi.h"
 #include "Spi_Cfg.h"
+#include "DHT11.h"
 
 extern Mcu_ConfigType McuDriverConfiguration;
 /*
@@ -95,6 +96,7 @@ int main(void)
     BMP180_Init(); // Load BMP180 factory calibration coefficients
     spi1_gpio_init(); // Initialize SPI1 GPIO pins
     spi1_config(); // Configure SPI1 peripheral
+    DHT11_Init(); // Initialize DHT11 on PB4
 
 
     tx_header.std_id = 0x244; // Set the standard ID for the CAN message
@@ -187,7 +189,24 @@ int main(void)
 
 
         /* SPI TEST */
-        spi1_loopback_test();
+        //spi1_loopback_test();
+
+        /* DHT11 TEST */
+        {
+            DHT11_DataType dht11_data;
+            uint8_t status = DHT11_Read(&dht11_data);
+            if (status == 1U)
+            {
+                printf("DHT11: H=%u%% T=%uC Checksum=%u\r\n",
+                       (unsigned int)dht11_data.Humidity,
+                       (unsigned int)dht11_data.Temperature,
+                       (unsigned int)dht11_data.Checksum);
+            }
+            else
+            {
+                printf("DHT11: NO DATA\r\n");
+            }
+        }
     }
     return 0;
 }
