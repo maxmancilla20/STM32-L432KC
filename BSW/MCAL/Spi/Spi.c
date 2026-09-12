@@ -18,15 +18,14 @@ void spi1_gpio_init(void)
     /* Enable clock access to SPI1 */
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
 
-    /* Configure PA5, PA6, PA7, PA4 as alternate function */
-    GPIOA->MODER &= ~((3U << 10) | (3U << 12) | (3U << 14) | (3U << 8));
-    GPIOA->MODER |=  ((2U << 10) | (2U << 12) | (2U << 14) | (2U << 8));
+    /* PA5..PA7 = AF5 for SPI1, PA4 = GPIO output for chip select */
+    GPIOA->MODER &= ~((3U << 10) | (3U << 12) | (3U << 14));
+    GPIOA->MODER |=  ((2U << 10) | (2U << 12) | (2U << 14));
 
-    /* AF5 for SPI1 on PA5..PA7 and PA4 */
-    GPIOA->AFR[0] &= ~((0xFU << 20) | (0xFU << 24) | (0xFU << 28) | (0xFU << 16));
-    GPIOA->AFR[0] |=  ((5U << 20) | (5U << 24) | (5U << 28) | (5U << 16));
+    GPIOA->AFR[0] &= ~((0xFU << 20) | (0xFU << 24) | (0xFU << 28));
+    GPIOA->AFR[0] |=  ((5U << 20) | (5U << 24) | (5U << 28));
 
-    /* Use PA4 as chip select */
+    /* PA4 as software-controlled chip select */
     GPIOA->MODER &= ~(3U << 8);
     GPIOA->MODER |=  (1U << 8);
     GPIOA->ODR |= (1U << 4);
