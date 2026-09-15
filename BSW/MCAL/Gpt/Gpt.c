@@ -19,6 +19,7 @@
 #define TIM2EN                  (1U << 0) // Timer 2 enable bit 0
 //#define TIM_CR1_CEN             (1U << 0) // Timer enable bit in CR1 register
 uint32_t SystemCoreClock = 4000000U;
+extern volatile uint32_t g_gt_tick_ms;
 
 /* Timer as an output compare */
 /* Controlling PB3 Cfg  TIM2 CH2*/
@@ -111,7 +112,22 @@ void tim2_output_pb3_compare_1hz(void)
 
 void Gpt_Init(void)
 {
- // TODO: Implement GPT Init
+    Gpt_Systick_1ms_Init();
+}
+
+void Gpt_Systick_1ms_Init(void)
+{
+    /* SysTick clock source = processor clock (4 MHz) */
+    SysTick->LOAD = (SystemCoreClock / 1000U) - 1U;
+    SysTick->VAL = 0U;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk |
+                    SysTick_CTRL_TICKINT_Msk |
+                    SysTick_CTRL_ENABLE_Msk;
+}
+
+void Gpt_Tim2_1ms_Init(void)
+{
+    /* TIM2 remains free for other functions. The system tick now uses SysTick. */
 }
 
 void tim2_1hz_init(void)
@@ -144,30 +160,35 @@ void tim2_1hz_delay(void)
 
 void Gpt_StartTimer(uint32_t timerId, uint32_t value)
 {
-    // TODO: Implement timer start
+    (void)timerId;
+    (void)value;
 }
 
 void Gpt_StopTimer(uint32_t timerId)
 {
-    // TODO: Implement timer stop
+    (void)timerId;
+    /* Keep the global system tick alive. It is the time base used by the app timers. */
 }
 
 void SystickDelay_Ms(uint32_t delay)
-{   
-    /* Reload with number of clock per millisecond */
-    SysTick->LOAD = SYSTICK_LOAD_VALUE; // Load the SysTick counter value
+{
+    volatile uint32_t start_tick;
 
-    /* Clear SysTick Current Value Register */
-    SysTick->VAL = 0; // Clear the current value
-
-    /* Enable SysTick and select internal clk_src */
-    SysTick->CTRL = CTRL_CLKSRC | CTRL_ENABLE; // Enable SysTick with processor clock
-
-    for(uint32_t i = 0; i < delay; i++)
+    if (delay == 0U)
     {
-        /* Wait until COUNTFLAG is set */
-        while((SysTick->CTRL & CTRL_COUNTFLAG) == 0) {} // Wait until the count flag is set
+        return;
     }
 
-    SysTick->CTRL = 0; // Disable SysTick after delay
+    start_tick = g_gt_tick_ms;
+
+    while ((g_gt_tick_ms - start_tick) < delay)
+    {
+        __ASM volatile ("nop");
+    }
+}
+
+void SysTick_Handler(void)
+{
+    extern volatile uint32_t g_gt_tick_ms;
+    g_gt_tick_ms++;
 }

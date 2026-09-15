@@ -24,6 +24,8 @@ typedef uint32_t Gpt_ChannelType;
  **             Function Prototypes                  **
  ******************************************************/
 void Gpt_Init(void);
+void Gpt_Systick_1ms_Init(void);
+void Gpt_Tim2_1ms_Init(void);
 void Gpt_StartTimer(Gpt_ChannelType timerId, uint32_t value);
 void Gpt_StopTimer(Gpt_ChannelType timerId);
 void SystickDelay_Ms(uint32_t delay);
