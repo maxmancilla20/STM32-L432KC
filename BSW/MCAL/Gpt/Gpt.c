@@ -129,6 +129,41 @@ void Gpt_Tim2_1ms_Init(void)
 {
     /* TIM2 remains free for other functions. The system tick now uses SysTick. */
 }
+void tim1_init(void)
+{
+    /* Configuration for PWM */
+    
+    /* Enable TIM1 clock */
+    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+
+    /* 4 MHz / (PSC+1) = 1 MHz timer clock.
+       With ARR = 19999, period = 20 ms exactly.
+       1 tick = 1 us, so CCR1 directly equals pulse width in microseconds. */
+    TIM1->PSC = 3U;
+    TIM1->ARR = 19999U;
+
+    /* CH1 in PWM mode 1 with preload enabled */
+    TIM1->CCMR1 = 0U;
+    TIM1->CCMR1 |= (0x6U << 4) | (0x1U << 3);
+
+    /* Enable CH1 output */
+    TIM1->CCER = 0U;
+    TIM1->CCER |= TIM_CCER_CC1E;
+
+    /* Enable main output (required on advanced timers like TIM1) */
+    TIM1->BDTR = 0U;
+    TIM1->BDTR |= TIM_BDTR_MOE;
+
+    /* Center position = 1.5 ms pulse */
+    TIM1->CCR1 = 1500U;
+
+    /* Force update to load PSC/ARR/CCR1 into the shadow registers */
+    TIM1->EGR |= TIM_EGR_UG;
+
+    /* Start timer */
+    TIM1->CR1 = TIM_CR1_ARPE | TIM_CR1_CEN;
+}
+
 
 void tim2_1hz_init(void)
 {
