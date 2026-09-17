@@ -1,50 +1,71 @@
-# STM32L432KC - Pin mapping summary
+# STM32L432KC - Current project pinout
 
-> This mapping reflects the current project configuration and the drivers already in use. Some pins have alternate functions and can be reused depending on the active peripheral.
+> This pinout reflects the active configuration used in the project at the time of the current debugging and sensor integration work. It is intentionally practical and hardware-oriented, not a generic board map.
 
-| Free or Used | Pin | Current use / function |
+## Active MCU assignments
+
+| Pin | Function | Status |
 | --- | --- | --- |
-| <span style="color: red;">Used</span> | PA0 | ADC1_IN5 |
-| <span style="color: red;">Used</span> | PA4 | SPI1_NSS / SPI1_SSEL |
-| <span style="color: red;">Used</span> | PA5 | SPI1_SCK |
-| <span style="color: red;">Used</span> | PA6 | SPI1_MISO |
-| <span style="color: red;">Used</span> | PA7 | SPI1_MOSI |
-| <span style="color: green;">Free</span> | PA8 | GPIO / PWM (not assigned in the base configuration) |
-| <span style="color: red;">Used</span> | PA9 | UART1_TX / I2C1_SCL (alternate depending on usage) |
-| <span style="color: red;">Used</span> | PA10 | UART1_RX / I2C1_SDA (alternate depending on usage) |
-| <span style="color: red;">Used</span> | PA11 | CAN_RX |
-| <span style="color: red;">Used</span> | PA12 | CAN_TX |
-| <span style="color: green;">Free</span> | PA15 | GPIO / SPI1 alternate NSS available as AF |
-| <span style="color: red;">Used</span> | PB0 | ADC1_IN15 |
-| <span style="color: green;">Free</span> | PB1 | GPIO / PWM (general use) |
-| <span style="color: green;">Free</span> | PB2 | GPIO free |
-| <span style="color: green;">Free</span> | PB3 | GPIO general |
-| <span style="color: green;">Free</span> | PB4 | GPIO general |
-| <span style="color: green;">Free</span> | PB5 | GPIO general |
-| <span style="color: red;">Used</span> | PB6 | I2C_SCL (documented in Dio_Cfg.h) |
-| <span style="color: red;">Used</span> | PB7 | I2C_SDA (documented in Dio_Cfg.h) |
-| <span style="color: green;">Free</span> | PB8 | GPIO general |
-| <span style="color: green;">Free</span> | PC0 | GPIO / ADC possible (if used in another configuration) |
-| <span style="color: green;">Free</span> | PC1 | GPIO / ADC possible |
-| <span style="color: green;">Free</span> | PC2 | GPIO / ADC possible |
-| <span style="color: green;">Free</span> | PC3 | GPIO / ADC possible |
+| PA0 | ADC input | <span style="color: red;">Used</span> |
+| PA2 | UART2_TX | <span style="color: red;">Used</span> |
+| PA3 | UART2_RX | <span style="color: red;">Used</span> |
+| PA4 | SPI1_NSS / CS manual | <span style="color: red;">Used</span> |
+| PA5 | SPI1_SCK | <span style="color: red;">Used</span> |
+| PA6 | SPI1_MISO | <span style="color: red;">Used</span> |
+| PA7 | SPI1_MOSI | <span style="color: red;">Used</span> |
+| PA9 | I2C1_SCL | <span style="color: red;">Used</span> |
+| PA10 | I2C1_SDA | <span style="color: red;">Used</span> |
+| PA11 | CAN_RX | <span style="color: red;">Used</span> |
+| PA12 | CAN_TX | <span style="color: red;">Used</span> |
+| PB0 | RC522 reset / GPIO control | <span style="color: red;">Used</span> |
+| PB1 | General GPIO / alternate USART3_RTS_DE | <span style="color: green;">Free</span> |
+| PB4 | DHT11 DATA line | <span style="color: red;">Used</span> |
+| PB6 | Reserved for I2C alternate usage | <span style="color: green;">Free</span> |
+| PB7 | Reserved for I2C alternate usage | <span style="color: green;">Free</span> |
+| PB3 | User GPIO / LED-related usage | <span style="color: green;">Free</span> |
+| PB5 | General GPIO | <span style="color: green;">Free</span> |
+| PB8 | General GPIO | <span style="color: green;">Free</span> |
+| PB9 | General GPIO | <span style="color: green;">Free</span> |
+| PA8 | PWM TIM1 function | <span style="color: red;">Used</span> |
+| PA15 | General GPIO / alternate function | <span style="color: green;">Free</span> |
 
-## Peripheral summary
+## Peripheral mapping
 
-| Peripheral | Pins used |
-| --- | --- |
-| ADC | PA0, PB0 |
-| SPI1 | PA4, PA5, PA6, PA7 |
-| UART1 | PA9, PA10 |
-| I2C1 | PA9, PA10 or PB6, PB7 (depending on implementation) |
-| CAN | PA11, PA12 |
-| GPIO | PA8, PA15, PB1, PB2, PB3, PB4, PB5, PB8 |
+![Peripheral summary](stm32l432kc_pinout_proyect.png)
 
-## Important note
+| Peripheral | MCU pins | Notes |
+| --- | --- | --- |
+| ADC | PA0 | ADC input used for project testing |
+| I2C1 | PA9, PA10 | BMP180 connected here |
+| UART2 | PA2, PA3 | Serial debug / printf |
+| SPI1 | PA4, PA5, PA6, PA7 | Used for SPI peripheral work and RC522 experiments |
+| DHT11 | PB4 | Data line for DHT11 sensor |
+| CAN | PA11, PA12 | CAN RX/TX |
 
-The configuration in `Dio_Cfg.h` and the implementation in `I2c.c` mark certain functions slightly differently:
+## Sensor-specific wiring currently in use
 
-- `Dio_Cfg.h` documents `PB6/PB7` as I2C.
-- `I2c.c` configures `PA9/PA10` as I2C1_SCL/SDA.
+| Sensor / Module | Pin used | Notes |
+| --- | --- | --- |
+| BMP180 | PA9 = SCL, PA10 = SDA | I2C1; mounted on the board and working |
+| DHT11 | PB4 | Data pin; 1-wire protocol |
+| SPI device | PA4-PA7 | SPI1 bus on MCU |
+| UART debug | PA2-PA3 | UART2 for serial log |
 
-This means the project currently has a pin-conflict area depending on which implementation is active; it is best to define one group as active at a time.
+## Important warnings
+
+- The DHT11 data line is not shared with UART2. PB4 is intentionally selected to avoid PA2/PA3 conflict.
+- The project has multiple configurations for I2C and SPI, but the current active mapping is:
+  - I2C1 on PA9/PA10
+  - SPI1 on PA4/PA5/PA6/PA7
+- If a different peripheral is enabled on the same pins, it must be reconfigured before reuse.
+- GPIOs such as PB0, PB3, PB4, PB5, PB8, and PB9 are convenient for lab experiments, but they should be assigned intentionally to avoid collisions.
+
+## Recommended board reference
+
+The current practical pin map for this project is:
+
+- BMP180: PA9 / PA10 (I2C1)
+- DHT11: PB4
+- SPI bus: PA4 / PA5 / PA6 / PA7
+- UART debug: PA2 / PA3
+- RC522 reset/control: PB0
