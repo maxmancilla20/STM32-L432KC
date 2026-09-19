@@ -33,6 +33,7 @@ void tim2_1hz_init(void);
 void tim2_1hz_delay(void);
 void tim2_output_pb3_compare_1hz(void);
 void tim2_input_capture(void);
+void tim1_init(void);
 /******************************************************
  **                Macros and Constants               **
  ******************************************************/

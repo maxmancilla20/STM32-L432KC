@@ -46,6 +46,8 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #include "Spi_Cfg.h"
 #include "DHT11.h"
 #include "Global_Timers.h"
+#include "Pwm_Driver.h"
+#include "ServoSG90_Driver.h"
 
 extern Mcu_ConfigType McuDriverConfiguration;
 /*
@@ -100,7 +102,13 @@ int main(void)
     DHT11_Init(); // Initialize DHT11 on PB4
     Gt_InitTimers();
     Gpt_Init();
+    ServoSG90_Init();
+
     Gt_StartTimer(GT_0, 500U);
+    Gt_StartTimer(GT_1, 1000U);
+    Gt_StartTimer(GT_2, 2000U);
+
+    /* Servo test on PA8 using TIM1_CH1 */
 
     tx_header.std_id = 0x244; // Set the standard ID for the CAN message
     tx_header.ide = CAN_ID_STD; // Set the identifier type to standard
@@ -130,14 +138,103 @@ int main(void)
     CAN1_SCE_IRQHandler
     */
 
-
     while(1)
     {
         if (Gt_CheckTimer(GT_0))
         {
             GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED every 500 ms
             Gt_StartTimer(GT_0, 500U);
+        }   
+
+        if (Gt_CheckTimer(GT_1))
+        {
+            static uint8_t PositionPosControl = 0U;
+
+            if (PositionPosControl >= 180U)
+            {
+                PositionPosControl = 0U;
+            }
+            else
+            {
+                PositionPosControl += 20U;
+            }
+
+            ServoSG90_SetAngle(PositionPosControl);
+            //Pwm_SetPulseUs(3000U);
+            Gt_StartTimer(GT_1, 300U);
         }
+
+    
+
+        if(Gt_CheckTimer(GT_2))
+        {
+            /* I2C Test */
+            // BMP180_ReadByte(0xD0); // Read the chip ID from the BMP180 sensor
+            BMP180_ReadMeasurement(&bmp180_data); // Read temperature and pressure data from the BMP180 sensor
+            {
+                int32_t temperatureHundredths =
+                    (int32_t)(bmp180_data.TemperatureC * 100.0F);
+                int32_t temperatureWhole = temperatureHundredths / 100;
+                int32_t temperatureFraction = temperatureHundredths % 100;
+                int32_t altitudeHundredths =
+                    (int32_t)(bmp180_data.AltitudeM * 100.0F);
+                int32_t altitudeWhole = altitudeHundredths / 100;
+                int32_t altitudeFraction = altitudeHundredths % 100;
+
+                if (temperatureFraction < 0)
+                {
+                    temperatureFraction = -temperatureFraction;
+                }
+
+                if (altitudeFraction < 0)
+                {
+                    altitudeFraction = -altitudeFraction;
+                }
+
+                printf("BMP180: \n\r     Temperature: %ld.%02ld C,\n\r     Pressure: %lu Pa, \n\r     Altitude: %ld.%02ld m\n\r\n\r",
+                    (long)temperatureWhole,
+                    (long)temperatureFraction,
+                    (unsigned long)bmp180_data.PressurePa,
+                    (long)altitudeWhole,
+                    (long)altitudeFraction);
+            }
+
+
+            /* SPI TEST */
+            //spi1_loopback_test();
+
+            /* DHT11 TEST */
+            {
+                DHT11_DataType dht11_data;
+                uint8_t status = DHT11_Read(&dht11_data);
+                if (status == 1U)
+                {
+                    //printf("DHT11: H=%u%% T=%uC Checksum=%u\r\n",
+                    //       (unsigned int)dht11_data.Humidity,
+                    //       (unsigned int)dht11_data.Temperature,
+                    //       (unsigned int)dht11_data.Checksum);
+
+                    printf("DHT11: \n\r     H=%u%% \n\r     T=%uC\r\n\n\r",
+                        (unsigned int)dht11_data.Humidity,
+                        (unsigned int)dht11_data.Temperature);
+                }
+                else
+                {
+                    printf("DHT11: NO DATA\r\n");
+                }
+            }
+
+            Gt_StartTimer(GT_2, 2000U);
+        
+        }
+
+        
+    }
+    return 0;
+}
+
+
+/* OLD TEST CODE IN WHILE*/
 
         //GPIOB->ODR |= USER_LED_PIN;  /* Turn on the LED */
         //GPIOB->ODR &= ~USER_LED_PIN; /* Turn off the LED */
@@ -162,66 +259,7 @@ int main(void)
 
         /* CAN SEND MESSAGE CONFIGURATION */
         //can_add_tx_message(&tx_header, &tx_data[0], tx_mailbox); // Send the CAN message
-        SystickDelay_Ms(250); // Delay for 1 second    
+        //SystickDelay_Ms(250); // Delay for 1 second
 
-
-        /* I2C Test */
-        // BMP180_ReadByte(0xD0); // Read the chip ID from the BMP180 sensor
-        BMP180_ReadMeasurement(&bmp180_data); // Read temperature and pressure data from the BMP180 sensor
-        {
-            int32_t temperatureHundredths =
-                (int32_t)(bmp180_data.TemperatureC * 100.0F);
-            int32_t temperatureWhole = temperatureHundredths / 100;
-            int32_t temperatureFraction = temperatureHundredths % 100;
-            int32_t altitudeHundredths =
-                (int32_t)(bmp180_data.AltitudeM * 100.0F);
-            int32_t altitudeWhole = altitudeHundredths / 100;
-            int32_t altitudeFraction = altitudeHundredths % 100;
-
-            if (temperatureFraction < 0)
-            {
-                temperatureFraction = -temperatureFraction;
-            }
-
-            if (altitudeFraction < 0)
-            {
-                altitudeFraction = -altitudeFraction;
-            }
-
-            printf("BMP180: \n\r     Temperature: %ld.%02ld C,\n\r     Pressure: %lu Pa, \n\r     Altitude: %ld.%02ld m\n\r\n\r",
-                   (long)temperatureWhole,
-                   (long)temperatureFraction,
-                   (unsigned long)bmp180_data.PressurePa,
-                   (long)altitudeWhole,
-                   (long)altitudeFraction);
-        }
-
-
-        /* SPI TEST */
-        //spi1_loopback_test();
-
-        /* DHT11 TEST */
-        {
-            DHT11_DataType dht11_data;
-            uint8_t status = DHT11_Read(&dht11_data);
-            if (status == 1U)
-            {
-                //printf("DHT11: H=%u%% T=%uC Checksum=%u\r\n",
-                //       (unsigned int)dht11_data.Humidity,
-                //       (unsigned int)dht11_data.Temperature,
-                //       (unsigned int)dht11_data.Checksum);
-
-                printf("DHT11: \n\r     H=%u%% \n\r     T=%uC\r\n\n\r",
-                    (unsigned int)dht11_data.Humidity,
-                    (unsigned int)dht11_data.Temperature);
-            }
-            else
-            {
-                printf("DHT11: NO DATA\r\n");
-            }
-        }
-    }
-    return 0;
-}
 
 
