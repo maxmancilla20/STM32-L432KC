@@ -7,6 +7,7 @@
 | Pin | Function | Status |
 | --- | --- | --- |
 | PA0 | ADC input | <span style="color: red;">Used</span> |
+| PA1 | HCSR04 echo TIM2 CH2 Input | <span style="color: red;">Used</span> |
 | PA2 | UART2_TX | <span style="color: red;">Used</span> |
 | PA3 | UART2_RX | <span style="color: red;">Used</span> |
 | PA4 | SPI1_NSS / CS manual | <span style="color: red;">Used</span> |
@@ -17,8 +18,9 @@
 | PA10 | I2C1_SDA | <span style="color: red;">Used</span> |
 | PA11 | CAN_RX | <span style="color: red;">Used</span> |
 | PA12 | CAN_TX | <span style="color: red;">Used</span> |
+| PA15 | General GPIO / alternate function | <span style="color: green;">Free</span> |
 | PB0 | RC522 reset / GPIO control | <span style="color: red;">Used</span> |
-| PB1 | General GPIO / alternate USART3_RTS_DE | <span style="color: green;">Free</span> |
+| PB1 | HCSR04 Trigger GPIO | <span style="color: red;">Used</span> |
 | PB4 | DHT11 DATA line | <span style="color: red;">Used</span> |
 | PB6 | Reserved for I2C alternate usage | <span style="color: green;">Free</span> |
 | PB7 | Reserved for I2C alternate usage | <span style="color: green;">Free</span> |
@@ -27,11 +29,10 @@
 | PB8 | General GPIO | <span style="color: green;">Free</span> |
 | PB9 | General GPIO | <span style="color: green;">Free</span> |
 | PA8 | PWM TIM1 function | <span style="color: red;">Used</span> |
-| PA15 | General GPIO / alternate function | <span style="color: green;">Free</span> |
 
 ## Peripheral mapping
 
-![Peripheral summary](stm32l432kc_pinout_proyect.png)
+![Peripheral summary](stm32l432kc_pinout_proyect.jpg)
 
 | Peripheral | MCU pins | Notes |
 | --- | --- | --- |

@@ -50,18 +50,6 @@ static void DHT11_SetHigh(void)
     DHT11_Pin_Input();
 }
 
-static void DHT11_Timer1us_Init(void)
-{
-    /* TIM2 is used as a 1 us time base for DHT11 timing measurements. */
-    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
-    TIM2->CR1 &= ~TIM_CR1_CEN;
-    TIM2->PSC = (uint16_t)((SystemCoreClock / 1000000U) - 1U);
-    TIM2->ARR = 0xFFFFU;
-    TIM2->CNT = 0U;
-    TIM2->EGR |= TIM_EGR_UG;
-    TIM2->CR1 |= TIM_CR1_CEN;
-}
-
 static void DHT11_DelayUs(uint32_t us)
 {
     /* Delay using TIM2 to create a microsecond-scale waiting window. */
@@ -77,7 +65,6 @@ void DHT11_Init(void)
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
     DHT11_Pin_Output();
     DHT11_SetHigh();
-    DHT11_Timer1us_Init();
 }
 
 uint8_t DHT11_Read(DHT11_DataType *data)

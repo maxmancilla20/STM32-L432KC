@@ -24,9 +24,6 @@ void Pwm_Gpio_Init(void)
 
     GPIOA->OTYPER &= ~GPIO_OTYPER_OT8;          // push-pull
     GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED8;     // high speed
-
-    /* Configure TIM1 */
-    tim1_init();
 }
 
 

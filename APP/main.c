@@ -48,6 +48,7 @@ GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED
 #include "Global_Timers.h"
 #include "Pwm_Driver.h"
 #include "ServoSG90_Driver.h"
+#include "HCSR04.h"
 
 extern Mcu_ConfigType McuDriverConfiguration;
 /*
@@ -62,6 +63,22 @@ extern Mcu_ConfigType McuDriverConfiguration;
  /* CAN GLOBAL VARIABLES */
  uint8_t rx_data[10];
  uint8_t tx_data[8];
+
+ tx_header.std_id = 0x244; // Set the standard ID for the CAN message
+ tx_header.ide = CAN_ID_STD; // Set the identifier type to standard
+ tx_header.rtr = 0; // Set the Remote Transmission Request to 0 (data frame)
+ tx_header.dlc = 8; // Set the Data Length Code to 8 bytes
+ tx_header.ext_id = 0; // Set the extended ID to 0 (not used for standard ID)
+ tx_header.transmit_global_time = 0; // Disable transmit global time
+ 
+ tx_data[0] = 0x01;
+ tx_data[1] = 0x02;
+ tx_data[2] = 0x03;
+ tx_data[3] = 0x04;
+ tx_data[4] = 0x05;
+ tx_data[5] = 0x06;
+ tx_data[6] = 0x07;
+ tx_data[7] = 0x08;
 
  uint32_t tx_mailbox[3];
 
@@ -89,6 +106,9 @@ int main(void)
     Dio_Init(); // Initialize GPIO
     pa0_adc_init();
     start_conversion();
+    /* Configure TIMERS  */
+    tim1_init(); /* TIM1 FOR PWM */
+    tim2_1us_Init(); /* Timer for HCSR04 and DHT11 */
 
     /* CAN INIT FUNCTIONS */
     can_gpio_init(); // Initialize CAN GPIO pins
@@ -100,6 +120,7 @@ int main(void)
     spi1_gpio_init(); // Initialize SPI1 GPIO pins
     spi1_config(); // Configure SPI1 peripheral
     DHT11_Init(); // Initialize DHT11 on PB4
+    HCSR04_Init(); // Initialize HCSR04 ultrasonic sensor
     Gt_InitTimers();
     Gpt_Init();
     ServoSG90_Init();
@@ -107,29 +128,6 @@ int main(void)
     Gt_StartTimer(GT_0, 500U);
     Gt_StartTimer(GT_1, 1000U);
     Gt_StartTimer(GT_2, 2000U);
-
-    /* Servo test on PA8 using TIM1_CH1 */
-
-    tx_header.std_id = 0x244; // Set the standard ID for the CAN message
-    tx_header.ide = CAN_ID_STD; // Set the identifier type to standard
-    tx_header.rtr = 0; // Set the Remote Transmission Request to 0 (data frame)
-    tx_header.dlc = 8; // Set the Data Length Code to 8 bytes
-    tx_header.ext_id = 0; // Set the extended ID to 0 (not used for standard ID)
-    tx_header.transmit_global_time = 0; // Disable transmit global time
-
-    tx_data[0] = 0x01;
-    tx_data[1] = 0x02;
-    tx_data[2] = 0x03;
-    tx_data[3] = 0x04;
-    tx_data[4] = 0x05;
-    tx_data[5] = 0x06;
-    tx_data[6] = 0x07;
-    tx_data[7] = 0x08;
-
-    //tim2_1hz_init(); // Initialize Timer 2 for 1Hz operation
-
-    //tim2_output_pb3_compare_1hz(); // Initialize Timer 2 for output compare on PB3
-    //tim2_input_capture(); // Jumper from PB3 to PA8
 
     /*
     CAN1_TX_IRQHandler 
@@ -143,6 +141,10 @@ int main(void)
         if (Gt_CheckTimer(GT_0))
         {
             GPIOB->ODR ^= USER_LED_PIN; // Toggle the LED every 500 ms
+
+            HCSR04_ReadDistance(&timestamp); // Read distance from HCSR04 ultrasonic sensor
+            printf("Distance: %lu mm\n\r", timestamp); // Print the distance in millimeters
+
             Gt_StartTimer(GT_0, 500U);
         }   
 
@@ -164,7 +166,6 @@ int main(void)
             Gt_StartTimer(GT_1, 300U);
         }
 
-    
 
         if(Gt_CheckTimer(GT_2))
         {
@@ -209,10 +210,7 @@ int main(void)
                 uint8_t status = DHT11_Read(&dht11_data);
                 if (status == 1U)
                 {
-                    //printf("DHT11: H=%u%% T=%uC Checksum=%u\r\n",
-                    //       (unsigned int)dht11_data.Humidity,
-                    //       (unsigned int)dht11_data.Temperature,
-                    //       (unsigned int)dht11_data.Checksum);
+
 
                     printf("DHT11: \n\r     H=%u%% \n\r     T=%uC\r\n\n\r",
                         (unsigned int)dht11_data.Humidity,
@@ -232,6 +230,11 @@ int main(void)
     }
     return 0;
 }
+
+
+/* OLD TEST CODE BEFORE WHILE*/
+
+    //tim2_output_pb3_compare_1hz(); // Initialize Timer 2 for output compare on PB3
 
 
 /* OLD TEST CODE IN WHILE*/
