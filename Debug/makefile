@@ -11,10 +11,14 @@ RM := rm -rf
 -include sources.mk
 -include Startup/subdir.mk
 -include BSW/MCAL/Uart/subdir.mk
+-include BSW/MCAL/Spi/subdir.mk
 -include BSW/MCAL/Mcu/subdir.mk
 -include BSW/MCAL/Lin/subdir.mk
+-include BSW/MCAL/I2c/subdir.mk
+-include BSW/MCAL/Gpt/subdir.mk
 -include BSW/MCAL/Dio/subdir.mk
 -include BSW/MCAL/Can/subdir.mk
+-include BSW/MCAL/Adc/subdir.mk
 -include APP/subdir.mk
 -include objects.mk
 
